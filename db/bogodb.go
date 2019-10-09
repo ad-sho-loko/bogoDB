@@ -1,8 +1,8 @@
-package backend
+package db
 
 import (
-	"bogoDB/backend/query"
-	"bogoDB/backend/storage"
+	"github.com/ad-sho-loko/bogodb/query"
+	"github.com/ad-sho-loko/bogodb/storage"
 	"log"
 	"os"
 	"os/signal"
@@ -51,10 +51,16 @@ func (db *BogoDb) Init(){
 }
 
 func (db *BogoDb) Execute(q string) error{
-	parser := query.NewParser()
-	node, err := parser.ParseMain(q)
+	tokenizer := query.NewTokenizer(q)
+	tokens, err := tokenizer.Tokenize()
 	if err != nil{
 		return err
+	}
+
+	parser := query.NewParser(tokens)
+	node, errs := parser.Parse()
+	if len(errs) != 0{
+		return errs[0] // show first error message anyway...
 	}
 
 	analyzer := query.NewAnalyzer(db.catalog)

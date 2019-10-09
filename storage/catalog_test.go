@@ -1,7 +1,7 @@
 package storage
 
 import (
-	"bogoDB/backend/meta"
+	"github.com/ad-sho-loko/bogodb/meta"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"sync"

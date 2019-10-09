@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bogoDB/backend"
 	"bufio"
 	"flag"
 	"fmt"
+	"github.com/ad-sho-loko/bogodb/db"
 	"log"
 	"net/http"
 	"os"
@@ -37,17 +37,17 @@ func client(){
 }
 
 func server(){
-	db, err := backend.NewBogoDb()
+	bdb, err := db.NewBogoDb()
 	if err != nil{
 		log.Fatal(err)
 	}
-	db.Init()
+	bdb.Init()
 
 	err = os.Setenv("BOGO_HOME", "/tmp/bogodb/"); if err != nil{
 		log.Fatal(err)
 	}
 
-	backend.NewApiServer(db).Host()
+	db.NewApiServer(bdb).Host()
 }
 
 var (

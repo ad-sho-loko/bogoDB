@@ -8,11 +8,12 @@ import (
 )
 
 func TestSerializeTuple(t *testing.T) {
-	in := [112]byte{3,4,5}
+	in := [111]byte{3,4,5}
 
 	tuple := Tuple{
 		minTxId:1,
 		maxTxId:2,
+		length:3,
 		data:in,
 	}
 
@@ -24,8 +25,9 @@ func TestSerializeTuple(t *testing.T) {
 	assert.Equal(t, uint64(1), binary.BigEndian.Uint64(out[0:8]))
 	assert.Equal(t, uint64(2), binary.BigEndian.Uint64(out[8:16]))
 	assert.Equal(t, byte(3), out[16])
-	assert.Equal(t, byte(4), out[17])
-	assert.Equal(t, byte(5), out[18])
+	assert.Equal(t, byte(3), out[17])
+	assert.Equal(t, byte(4), out[18])
+	assert.Equal(t, byte(5), out[19])
 }
 
 func TestDeserializeTuple(t *testing.T) {
@@ -34,6 +36,8 @@ func TestDeserializeTuple(t *testing.T) {
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
 		// maxTxId
 		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+		// length
+		0x03,
 		// data
 		0x03, 0x04, 0x05,
 	}
@@ -45,6 +49,7 @@ func TestDeserializeTuple(t *testing.T) {
 
 	assert.Equal(t, uint64(1), out.minTxId)
 	assert.Equal(t, uint64(2), out.maxTxId)
+	assert.Equal(t, byte(3), out.length)
 	assert.Equal(t, byte(3), out.data[0])
 	assert.Equal(t, byte(4), out.data[1])
 	assert.Equal(t, byte(5), out.data[2])

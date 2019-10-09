@@ -6,6 +6,23 @@ import (
 	"testing"
 )
 
+func TestEq(t *testing.T){
+	tokens := []*Token{
+		{kind:STRING, str:"1"},
+		{kind:EQ},
+		{kind:STRING, str:"2"},
+	}
+
+	p := NewParser(tokens)
+	node := p.eq().(*Eq)
+	left := node.left.(*Lit)
+	right := node.right.(*Lit)
+
+	assert.Equal(t, "1", left.v)
+	assert.Equal(t, "2", right.v)
+}
+
+
 func TestParseCreateTable(t *testing.T){
 	tokens := []*Token{
 		{kind:CREATE},
@@ -17,13 +34,13 @@ func TestParseCreateTable(t *testing.T){
 		{kind:RBRACE},
 	}
 
-	p := NewParser()
-	node, err := p.parse(tokens)
+	p := NewParser(tokens)
+	node, err := p.Parse()
 	if err != nil{
 		log.Fatal(err)
 	}
 
-	n := node.(*CreateTableNode)
+	n := node.(*CreateTableStmt)
 	assert.Equal(t, "users", n.TableName)
 	assert.Equal(t, "id", n.ColNames[0])
 	assert.Equal(t, "int", n.ColTypes[0])
@@ -32,19 +49,22 @@ func TestParseCreateTable(t *testing.T){
 func TestParseSelect(t *testing.T){
 	tokens := []*Token{
 		{kind:SELECT},
-		// {kind:STAR},
 		{kind:STRING, str:"id"},
 		{kind:FROM},
 		{kind:STRING, str:"users"},
+		{kind:WHERE, str:"where"},
+		{kind:STRING, str:"1"},
+		{kind:EQ},
+		{kind:STRING, str:"2"},
 	}
 
-	p := NewParser()
-	node, err := p.parse(tokens)
+	p := NewParser(tokens)
+	node, err := p.Parse()
 	if err != nil{
 		log.Fatal(err)
 	}
 
-	n := node.(*SelectNode)
+	n := node.(*SelectStmt)
 	assert.Equal(t, "users", n.From.TableNames[0])
 	assert.Equal(t, "id", n.ColNames[0])
 }

@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"bogoDB/backend/meta"
 	"encoding/json"
+	"github.com/ad-sho-loko/bogodb/meta"
 	"io/ioutil"
 	"path"
 	"sync"

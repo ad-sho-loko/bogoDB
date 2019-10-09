@@ -26,17 +26,21 @@ func NewLru(cap int) *Lru {
 	}
 }
 
-func (l *Lru) Insert(key, value interface{}){
+func (l *Lru) Insert(key, value interface{}) interface{} {
 	l.mutex.Lock()
 	defer l.mutex.Unlock()
 
+	var victim interface{}
 	ent := &entry{key, value}
 	elm := l.evictList.PushFront(ent)
 	l.items[key] = elm
 
 	if l.needEvict(){
+		victim = l.evictList.Back()
 		l.removeOldest()
 	}
+
+	return victim
 }
 
 func (l *Lru) Get(key interface{}) interface{}{

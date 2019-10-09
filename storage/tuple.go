@@ -11,7 +11,8 @@ const TupleSize = 128
 type Tuple struct {
 	minTxId uint64 // txId when inserted
 	maxTxId uint64 // txId when updated
-	data [112]byte
+	length uint8
+	data [111]byte
 }
 
 func SerializeTuple(t Tuple) ([TupleSize]byte, error){
@@ -19,7 +20,8 @@ func SerializeTuple(t Tuple) ([TupleSize]byte, error){
 
 	binary.BigEndian.PutUint64(b[0:8], t.minTxId)
 	binary.BigEndian.PutUint64(b[8:16], t.maxTxId)
-	copy(b[16:], t.data[:])
+	b[16] = t.length
+	copy(b[17:], t.data[:])
 
 	return b, nil
 }
@@ -29,7 +31,8 @@ func DeserializeTuple(b [TupleSize]byte) (Tuple, error){
 
 	t.minTxId = binary.BigEndian.Uint64(b[0:8])
 	t.maxTxId = binary.BigEndian.Uint64(b[8:16])
-	copy(t.data[:], b[16:])
+	t.length = b[16]
+	copy(t.data[:], b[17:])
 
 	return t, nil
 }

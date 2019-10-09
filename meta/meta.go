@@ -1,6 +1,6 @@
 package meta
 
-// Scheme is the definition of tables and columns
+// Scheme is the definition of tables and Columns
 type Scheme struct {
 	TblName string `json:"tblName"`
 	ColNames []string `json:"colNames"`
@@ -16,12 +16,12 @@ func NewScheme(tblName string, colNames []string, colTypes []ColType) *Scheme{
 }
 
 type Table struct {
-	name string
-	columns []Column
+	Name    string
+	Columns []Column
 }
 
 type Column struct {
-	name string
+	Name string
 	ctype string
 }
 

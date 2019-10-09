@@ -1,9 +1,9 @@
 package query
 
 import (
-	"bogoDB/backend/meta"
-	"bogoDB/backend/storage"
 	"fmt"
+	"github.com/ad-sho-loko/bogodb/meta"
+	"github.com/ad-sho-loko/bogodb/storage"
 )
 
 // Analyzer analyze the parsed sql.
@@ -15,16 +15,21 @@ type Analyzer struct {
 }
 
 type Query interface {
+	evalQuery()
 }
 
 type SelectQuery struct {
 	Col []*meta.Column
 	From []*meta.Table
+	Where Expr
 }
 
 type CreateTableQuery struct {
 	Scheme *meta.Scheme
 }
+
+func (q *SelectQuery) evalQuery(){}
+func (q *CreateTableQuery) evalQuery(){}
 
 func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
 	return &Analyzer{
@@ -32,7 +37,7 @@ func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
 	}
 }
 
-func (a *Analyzer) analyzeSelect(n *SelectNode) (*SelectQuery, error){
+func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 	var q *SelectQuery
 
 	// analyze `from`
@@ -68,7 +73,7 @@ func (a *Analyzer) analyzeSelect(n *SelectNode) (*SelectQuery, error){
 	return q, nil
 }
 
-func (a *Analyzer) analyzeCreateTable(n *CreateTableNode) (*CreateTableQuery, error){
+func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, error){
 	var q CreateTableQuery
 
 	if a.catalog.HasScheme(n.TableName){
@@ -88,13 +93,13 @@ func (a *Analyzer) analyzeCreateTable(n *CreateTableNode) (*CreateTableQuery, er
 	return &q, nil
 }
 
-func (a *Analyzer) AnalyzeMain(n Node) (Query, error){
-	switch concrete := n.(type) {
-	case *SelectNode:
+func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error){
+	switch concrete := stmt.(type) {
+	case *SelectStmt:
 		return a.analyzeSelect(concrete)
-	case *CreateTableNode:
+	case *CreateTableStmt:
 		return a.analyzeCreateTable(concrete)
 	}
 
-	return nil, fmt.Errorf("failed to analyze query : %s", n.ErrInfo())
+	return nil, fmt.Errorf("failed to analyze query")
 }

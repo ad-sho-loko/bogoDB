@@ -1,15 +1,15 @@
 package query
 
 import (
-	"bogoDB/backend/meta"
-	"bogoDB/backend/storage"
+	"github.com/ad-sho-loko/bogodb/meta"
+	"github.com/ad-sho-loko/bogodb/storage"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 )
 
 func TestAnalyzeCreateTable(t *testing.T){
-	n := &CreateTableNode{
+	n := &CreateTableStmt{
 		TableName:"users",
 		ColNames:[]string{"id"},
 		ColTypes:[]string{"int"},

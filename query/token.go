@@ -20,6 +20,7 @@ const(
 
 	lit_begin
 	STRING
+	NUMBER
 	lit_end
 
 	type_begin
@@ -31,6 +32,7 @@ const(
 	RBRACE
 	COMMA
 	STAR
+	EQ
 	operator_end
 
 	keyword_begin
@@ -39,14 +41,18 @@ const(
 	WHERE
 	CREATE
 	TABLE
+	INSERT
+	INTO
+	VALUES
 	keyword_end
 )
 
 var tokens = [...]string{
-	ILLEGAL:"ILLEGAL",
-	EOF:"EOR",
-	STRING:"STRING",
-	INT:"INT",
+	ILLEGAL:"Illegal",
+	EOF:"Eor",
+	STRING:"String",
+	NUMBER:"Number",
+	INT:"Int",
 	LBRACE:"{",
 	RBRACE:"}",
 	COMMA:",",
@@ -55,40 +61,43 @@ var tokens = [...]string{
 	WHERE:"Where",
 	CREATE:"Create",
 	TABLE:"Table",
+	INSERT:"Insert",
+	INTO:"Into",
+	VALUES:"Values",
 }
 
 func (t TokenKind) String() string{
 	return tokens[t]
 }
 
-type tokenizer struct {
+type Tokenizer struct {
 	input string
 	pos int
 }
 
-func newTokenizer(input string) *tokenizer{
-	return &tokenizer{
+func NewTokenizer(input string) *Tokenizer {
+	return &Tokenizer{
 		input:input,
 		pos:0,
 	}
 }
 
-func (t *tokenizer) isSpace() bool{
+func (t *Tokenizer) isSpace() bool{
 	return t.input[t.pos] == ' ' || t.input[t.pos] == '\n' || t.input[t.pos] == '\t'
 }
 
 
-func (t *tokenizer) skipSpace(){
+func (t *Tokenizer) skipSpace(){
 	for t.isSpace(){
 		t.pos++
 	}
 }
 
-func (t *tokenizer) isEnd() bool{
+func (t *Tokenizer) isEnd() bool{
 	return t.pos >= len(t.input)
 }
 
-func (t *tokenizer) matchKeyWord(keyword string) bool{
+func (t *Tokenizer) matchKeyWord(keyword string) bool{
 	ok := t.pos + len(keyword) <= len(t.input) &&
 		strings.ToLower(t.input[t.pos:t.pos+len(keyword)]) == keyword
 
@@ -98,12 +107,26 @@ func (t *tokenizer) matchKeyWord(keyword string) bool{
 	return ok
 }
 
-func (t *tokenizer) isAsciiChar() bool{
+func (t *Tokenizer) isAsciiChar() bool{
 	return (t.input[t.pos] >= 'a' && t.input[t.pos] <= 'z') ||
 			(t.input[t.pos] >= 'A' && t.input[t.pos] <= 'Z')
 }
 
-func (t *tokenizer) scanString() string{
+func (t *Tokenizer) isNumber() bool{
+	return t.input[t.pos] >= '0' && t.input[t.pos] <= '9'
+}
+
+
+func (t *Tokenizer) scanNumber() string{
+	var out []uint8
+	for !t.isEnd() && !t.isSpace() && t.isNumber(){
+		out = append(out, t.input[t.pos])
+		t.pos++
+	}
+	return string(out)
+}
+
+func (t *Tokenizer) scanString() string{
 	var out []uint8
 	for !t.isEnd() && !t.isSpace(){
 		out = append(out, t.input[t.pos])
@@ -112,7 +135,7 @@ func (t *tokenizer) scanString() string{
 	return string(out)
 }
 
-func (t *tokenizer) Tokenize() ([]*Token, error){
+func (t *Tokenizer) Tokenize() ([]*Token, error){
 	var tokens []*Token
 
 	// compatible with ascii.
@@ -126,6 +149,21 @@ func (t *tokenizer) Tokenize() ([]*Token, error){
 
 		if t.matchKeyWord("table"){
 			tokens = append(tokens, &Token{ kind : TABLE })
+			continue
+		}
+
+		if t.matchKeyWord("insert"){
+			tokens = append(tokens, &Token{ kind : INSERT })
+			continue
+		}
+
+		if t.matchKeyWord("into"){
+			tokens = append(tokens, &Token{ kind : INTO })
+			continue
+		}
+
+		if t.matchKeyWord("values"){
+			tokens = append(tokens, &Token{ kind : VALUES })
 			continue
 		}
 
@@ -149,6 +187,13 @@ func (t *tokenizer) Tokenize() ([]*Token, error){
 			continue
 		}
 
+		if t.isNumber(){
+			num := t.scanNumber()
+			tkn := NewToken(NUMBER, num)
+			tokens = append(tokens, tkn)
+			continue
+		}
+
 		if t.isAsciiChar(){
 			ascii := t.scanString()
 			tkn := NewToken(STRING, ascii)
@@ -161,6 +206,7 @@ func (t *tokenizer) Tokenize() ([]*Token, error){
 		case '}': tokens = append(tokens, &Token{ kind : RBRACE})
 		case ',': tokens = append(tokens, &Token{ kind : COMMA})
 		case '*': tokens = append(tokens, &Token{ kind : STAR})
+		case '=': tokens = append(tokens, &Token{ kind : EQ})
 		default:
 			// error
 		}
