@@ -18,7 +18,7 @@ type Transaction struct {
 
 func NewTransactionManager() *TransactionManager{
 	return &TransactionManager{
-		// it should be persisted
+		// it should be persisted when a server shutdown.
 		currentTxid:0,
 	}
 }
@@ -39,8 +39,8 @@ func (t *Transaction) Txid() uint64{
 	return t.txid
 }
 
-func (t *Transaction) Commit(tableName string){
-	for _, tuple := range t.tuples{
+func (t *Transaction) Commit(tableName string, tuples []*Tuple){
+	for _, tuple := range tuples{
 		t.storage.InsertTuple(tableName, tuple)
 	}
 }

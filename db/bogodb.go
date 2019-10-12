@@ -71,8 +71,11 @@ func (db *BogoDb) Execute(q string) error{
 		return err
 	}
 
+	planner := query.NewPlanner(analyzedQuery)
+	plan, _ := planner.PlanMain()
+
 	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
-	return executor.ExecuteMain(analyzedQuery)
+	return executor.ExecuteMain(analyzedQuery, plan)
 }
 
 func (db *BogoDb) Terminate(){

@@ -18,24 +18,26 @@ type Tuple struct {
 func NewTuple(minTxId uint64, values []interface{}) *Tuple{
 	var b [111]byte
 
-	/*
 	i := 0
+	length := uint8(0)
 	for _, v := range values{
 		switch concrete := v.(type) {
 		case int:
 			binary.BigEndian.PutUint32(b[i:i+4], uint32(concrete))
+			length++
 			i+=4
 		case string:
+			// b[i] = uint8(len(concrete))
 			// utf32 := []byte(concrete)
-			// b[i] = len(concrete)
-
+			// utf2
+			length++
 		}
 	}
-	*/
 
 	return &Tuple{
 		minTxId:minTxId,
-		length:uint8(len(values)),
+		maxTxId:minTxId,
+		length:length,
 		data:b,
 	}
 }
@@ -60,4 +62,9 @@ func DeserializeTuple(b [TupleSize]byte) (Tuple, error){
 	copy(t.data[:], b[17:])
 
 	return t, nil
+}
+
+func (t *Tuple) IsUnused() bool{
+	// If minTxId is zero, it's an empty tuple.
+	return t.minTxId == 0
 }

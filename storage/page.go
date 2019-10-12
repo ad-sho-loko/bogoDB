@@ -2,7 +2,6 @@ package storage
 
 import (
 	"encoding/binary"
-	"sync/atomic"
 )
 
 const (
@@ -10,7 +9,6 @@ const (
 )
 
 // Page is fixed-sized(4KB) byte chunk as below.
-
 // +----------------+--------+--------+--------------------+
 //| PageHeaderData | SlotArray[0] |          |
 //+----------------+---+----+---+----+                    |
@@ -23,18 +21,18 @@ const (
 //|          <----=+ Item     | Item            | Tuple |
 //+----------------+----------+-----------------+---------+
 
-// uint64 is page_id
-var currentPgid *uint64
-func newPgid() uint64 { return uint64(atomic.AddUint64(currentPgid, 1))}
-
 type Page struct {
 	Tuples [TupleNumber]Tuple
 }
 
-func NewPage(tuples [TupleNumber]Tuple) *Page{
+func NewPage() *Page{
 	return &Page{
-		Tuples:tuples,
+		Tuples:[TupleNumber]Tuple{},
 	}
+}
+
+func NewPgid(tableName string) uint64{
+	return 0
 }
 
 func SerializePage(p *Page)([4096]byte, error){

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/ad-sho-loko/bogodb/meta"
 	"github.com/ad-sho-loko/bogodb/storage"
+	"strconv"
 )
 
 // Analyzer analyze the parsed sql.
@@ -30,7 +31,7 @@ type CreateTableQuery struct {
 
 type InsertQuery struct {
 	Table  *meta.Table
-	Values []string
+	Values []interface{}
 }
 
 func (q *SelectQuery) evalQuery(){}
@@ -61,10 +62,22 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 		return nil, fmt.Errorf("insert failed : `values` should be same length")
 	}
 
-	var values []string
+	var lits []string
 	for _, l := range n.Values{
 		num := l.(*Lit)
-		values = append(values, num.v)
+		lits = append(lits, num.v)
+	}
+
+	var values []interface{}
+	for i, v := range lits{
+		if scheme.ColTypes[i] == meta.Int{
+			n, _ := strconv.Atoi(v)
+			values = append(values, n)
+		}else if scheme.ColTypes[i] == meta.Varchar{
+			values = append(values, v)
+		}else{
+			return nil, fmt.Errorf("insert failed : unexpected types parsed")
+		}
 	}
 
 	q.Table = t
@@ -73,13 +86,13 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 }
 
 func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
-	var q *SelectQuery
+	var q SelectQuery
 
 	// analyze `from`
 	var schemes []*meta.Scheme
 	for _, name := range n.From.TableNames{
 		scheme := a.catalog.FetchScheme(name)
-		if scheme != nil{
+		if scheme == nil{
 			return nil, fmt.Errorf("select failed :table `%s` doesn't exist", name)
 		}
 		schemes = append(schemes, scheme)
@@ -103,9 +116,16 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 		}
 	}
 
-	// q.From = schemes
+
+	var tables []*meta.Table
+	for _, s := range schemes{
+		table := s.ConvertTable()
+		tables = append(tables, table)
+	}
+
+	q.From = tables
 	q.Col = cols
-	return q, nil
+	return &q, nil
 }
 
 func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, error){

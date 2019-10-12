@@ -28,6 +28,7 @@ func (a *ApiServer) executeHandler(w http.ResponseWriter, r *http.Request){
 	err := a.db.Execute(q[0])
 	if err != nil{
 		w.WriteHeader(http.StatusBadRequest)
+		log.Println(err)
 		return
 	}
 }

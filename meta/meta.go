@@ -15,6 +15,22 @@ func NewScheme(tblName string, colNames []string, colTypes []ColType) *Scheme{
 	}
 }
 
+func (s *Scheme) ConvertTable() *Table{
+	var t Table
+	t.Name = s.TblName
+
+	var columns []Column
+	for i := range s.ColNames{
+		var col Column
+		col.Name = s.ColNames[i]
+		col.ctype = string(s.ColTypes[i])
+		columns = append(columns, col)
+	}
+
+	t.Columns = columns
+	return &t
+}
+
 type Table struct {
 	Name    string
 	Columns []Column

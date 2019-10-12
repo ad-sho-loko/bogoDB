@@ -19,7 +19,7 @@ func NewParser(tokens []*Token) *Parser{
 }
 
 func (p *Parser) consume(kind TokenKind) bool{
-	if p.tokens[p.pos].kind == kind{
+	if p.pos < len(p.tokens) && p.tokens[p.pos].kind == kind{
 		p.pos++
 		return true
 	}
@@ -109,7 +109,6 @@ func (p *Parser) selectStmt() Stmt{
 
 	// where
 	if p.consume(WHERE){
-
 	}
 
 	return selectNode

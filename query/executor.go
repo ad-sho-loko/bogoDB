@@ -3,7 +3,6 @@ package query
 import (
 	"fmt"
 	"github.com/ad-sho-loko/bogodb/storage"
-	"github.com/go-ffmt/ffmt"
 	"github.com/pkg/errors"
 )
 
@@ -27,9 +26,15 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 	for i:=uint64(0);; i++{
 		t, err := store.ReadTuple(s.tblName, i)
 		if err != nil{
-			// if no more tuples, read tuples end.
+			// if no more pages, finish reading tuples.
 			break
 		}
+
+		if t.IsUnused(){
+			// if no more tuples in page, finish reading tuples.
+			break
+		}
+
 		result = append(result, t)
 	}
 
@@ -42,9 +47,7 @@ func (e *Executor) execExpr(expr Expr){
 }
 */
 
-func (e *Executor) selectTable(q *SelectQuery) error{
-	var p Plan
-
+func (e *Executor) selectTable(q *SelectQuery, p *Plan) error{
 	// from
 	tuples := p.scanners.Scan(e.storage)
 
@@ -54,8 +57,10 @@ func (e *Executor) selectTable(q *SelectQuery) error{
 	// select
 	// q.Col.n
 
-	// print!
-	ffmt.Puts(tuples)
+	// print tuples!
+	for _, t := range tuples{
+		fmt.Println(t)
+	}
 
 	return nil
 }
@@ -66,9 +71,10 @@ func (e *Executor) insertTable(w *InsertQuery) error{
 	}
 
 	var tuples []*storage.Tuple
-	tx := e.tranManager.BeginTransaction(tuples, e.storage)
-	// t := storage.NewTuple(tx.Txid(), w.Values)
-	tx.Commit(w.Table.Name)
+	tx := e.tranManager.BeginTransaction(nil, e.storage)
+	t := storage.NewTuple(tx.Txid(), w.Values)
+	tuples = append(tuples, t)
+	tx.Commit(w.Table.Name, tuples)
 	return nil
 
 }
@@ -77,12 +83,14 @@ func (e *Executor) createTable(q *CreateTableQuery) error {
 	return e.catalog.Add(q.Scheme)
 }
 
-func (e *Executor) ExecuteMain(q Query) error{
+func (e *Executor) ExecuteMain(q Query, p *Plan) error{
 	switch concrete := q.(type) {
 	case *CreateTableQuery:
 		return e.createTable(concrete)
 	case *InsertQuery:
 		return e.insertTable(concrete)
+	case *SelectQuery:
+		return e.selectTable(concrete, p)
 	}
 
 	return errors.New("failed to execute query")

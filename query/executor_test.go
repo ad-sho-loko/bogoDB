@@ -18,7 +18,7 @@ func TestExecuteCreateTable(t *testing.T) {
 	}
 
 	ctg := storage.NewEmtpyCatalog()
-	e := NewExecutor(nil, ctg)
+	e := NewExecutor(nil, ctg, nil)
 	assert.False(t, e.catalog.HasScheme("users"))
 
 	if err := e.createTable(q); err != nil{
