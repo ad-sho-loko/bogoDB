@@ -19,7 +19,7 @@ func newBufferPool() *bufferPool{
 }
 
 func (b *bufferPool) toPid(tid uint64) uint64{
-	return tid
+	return tid / TupleNumber
 }
 
 func (b *bufferPool) pinDirty(pg *pageDescriptor){
@@ -30,7 +30,8 @@ func (b *bufferPool) unpinDirty(pg *pageDescriptor){
 	pg.ref--
 }
 
-func (b *bufferPool) newPage(){}
+func (b *bufferPool) newPage(){
+}
 
 func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error){
 	pgid := b.toPid(tid)

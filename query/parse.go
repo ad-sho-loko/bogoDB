@@ -56,7 +56,7 @@ func (p *Parser) expect(kind TokenKind) *Token{
 func (p *Parser) expr() Expr {
 	token := p.tokens[p.pos]
 
-	if p.consume(INT) || p.consume(STRING){
+	if p.consume(NUMBER) || p.consume(STRING){
 		return &Lit{v:token.str}
 	}
 
@@ -118,7 +118,8 @@ func (p *Parser) selectStmt() Stmt{
 func (p *Parser) insertTableStmt() Stmt{
 	p.expect(INTO)
 	tblName := p.expect(STRING)
-	p.expect(LBRACE)
+	p.expect(VALUES)
+	p.expect(LBRACE) // FIXME : bug
 
 	var exprs []Expr
 	for !p.consume(RBRACE){
@@ -142,9 +143,9 @@ func (p *Parser) createTableStmt() Stmt{
 
 	for{
 		colName := p.expect(STRING)
-		colType := p.expect(INT)
+		p.expect(INT)
 		colNames = append(colNames, colName.str)
-		colTypes = append(colTypes, colType.str)
+		colTypes = append(colTypes, "int")
 		if !p.consume(COMMA){
 			break
 		}
@@ -168,6 +169,11 @@ func (p *Parser) Parse() (Stmt, []error){
 	// select
 	if p.consume(SELECT){
 		return p.selectStmt(), p.errors
+	}
+
+	// insert
+	if p.consume(INSERT){
+		return p.insertTableStmt(), p.errors
 	}
 
 	// unexpected query comes

@@ -12,6 +12,7 @@ type BogoDb struct {
 	exit chan int
 	storage *storage.Storage
 	catalog *storage.Catalog
+	tranManager *storage.TransactionManager
 }
 
 func NewBogoDb() (*BogoDb, error){
@@ -19,7 +20,7 @@ func NewBogoDb() (*BogoDb, error){
 	path, ok := os.LookupEnv("BOGO_HOME")
 	if !ok{
 		// for test codes
-		path = "./tmp/"
+		path = "."
 	}
 
 	catalog, err := storage.LoadCatalog(path)
@@ -30,6 +31,7 @@ func NewBogoDb() (*BogoDb, error){
 	return &BogoDb{
 		catalog:catalog,
 		storage:storage.NewStorage(),
+		tranManager:storage.NewTransactionManager(),
 		exit:make(chan int, 1),
 	}, nil
 }
@@ -69,7 +71,7 @@ func (db *BogoDb) Execute(q string) error{
 		return err
 	}
 
-	executor := query.NewExecutor(db.storage, db.catalog)
+	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
 	return executor.ExecuteMain(analyzedQuery)
 }
 

@@ -5,6 +5,10 @@ import (
 	"sync/atomic"
 )
 
+const (
+	TupleNumber = 32
+)
+
 // Page is fixed-sized(4KB) byte chunk as below.
 
 // +----------------+--------+--------+--------------------+
@@ -21,17 +25,15 @@ import (
 
 // uint64 is page_id
 var currentPgid *uint64
-
 func newPgid() uint64 { return uint64(atomic.AddUint64(currentPgid, 1))}
 
 type Page struct {
-	Tuples [32]Tuple
+	Tuples [TupleNumber]Tuple
 }
-// Lower uint32 // pointer of the last line ptr
-// Upper uint32 // pointer of the last tuple
 
-func NewPage() *Page{
+func NewPage(tuples [TupleNumber]Tuple) *Page{
 	return &Page{
+		Tuples:tuples,
 	}
 }
 

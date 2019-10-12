@@ -14,24 +14,39 @@ func NewStorage() *Storage{
 }
 
 // postgresqlはbuffertag単位で保存する.
-// buffertag -> (table, block_id)
-// block_idはpage_idと捉えてよさそう？
-func (s *Storage) insertPage(tablename string, pgId uint64, newTuples []*Tuple){
-	/*
-	isNeedPersist, victim := s.buffer.putPage(pgId, )
+func (s *Storage) insertPage(tablename string, pgid uint64, newTuples *[32]Tuple){
+	pg := &Page{
+		Tuples:*newTuples,
+	}
+
+	isNeedPersist, victim := s.buffer.putPage(pgid, pg)
 
 	if isNeedPersist {
 		// if a victim is dirty, its data must be persisted in the disk now.
-		// s.disk.persist(victim)
+
+		err := s.disk.persist(tablename, victim)
+		if err != nil{
+
+		}
 	}
-	*/
 }
 
-func (s *Storage) InsertTuple(tablename string, newTuples []*Tuple){
+func (s *Storage) InsertTuple(tablename string, newTuples *Tuple){
 }
 
-func (s *Storage) ReadPage(tableName string, pgid uint64) (*Page, error){
-	pg, err := s.buffer.readPage(tableName, 0)
+func (s *Storage) ReadTuple(tableName string, tid uint64) (*Tuple, error){
+	pgid := s.buffer.toPid(tid)
+
+	pg, err := s.readPage(tableName, pgid)
+	if err != nil{
+		return nil, err
+	}
+
+	return &pg.Tuples[tid % TupleNumber], nil
+}
+
+func (s *Storage) readPage(tableName string, pgid uint64) (*Page, error){
+	pg, err := s.buffer.readPage(tableName, pgid)
 
 	if err != nil{
 		return nil, err
@@ -42,7 +57,8 @@ func (s *Storage) ReadPage(tableName string, pgid uint64) (*Page, error){
 		return pg, nil
 	}
 
-	pg, err  = s.disk.fetchPage(tableName, pgid)
+	pg, err = s.disk.fetchPage(tableName, pgid)
+
 	if err != nil{
 		return nil, err
 	}

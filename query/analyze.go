@@ -28,13 +28,48 @@ type CreateTableQuery struct {
 	Scheme *meta.Scheme
 }
 
+type InsertQuery struct {
+	Table  *meta.Table
+	Values []string
+}
+
 func (q *SelectQuery) evalQuery(){}
+func (q *InsertQuery) evalQuery(){}
 func (q *CreateTableQuery) evalQuery(){}
 
 func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
 	return &Analyzer{
 		catalog:catalog,
 	}
+}
+
+func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
+	var q InsertQuery
+
+	// analyze `into`
+	if !a.catalog.HasScheme(n.TableName){
+		return nil, fmt.Errorf("insert failed : `%s` doesn't exists", n.TableName)
+	}
+	scheme := a.catalog.FetchScheme(n.TableName)
+
+	t := &meta.Table{
+		Name:n.TableName,
+	}
+
+	// analyze `values`
+	if len(n.Values) != len(scheme.ColNames){
+		return nil, fmt.Errorf("insert failed : `values` should be same length")
+	}
+
+	var values []string
+	for _, l := range n.Values{
+		num := l.(*Lit)
+		values = append(values, num.v)
+	}
+
+	q.Table = t
+	q.Values = values
+	return &q, nil
 }
 
 func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
@@ -99,6 +134,8 @@ func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error){
 		return a.analyzeSelect(concrete)
 	case *CreateTableStmt:
 		return a.analyzeCreateTable(concrete)
+	case *InsertStmt:
+		return a.analyzeInsert(concrete)
 	}
 
 	return nil, fmt.Errorf("failed to analyze query")

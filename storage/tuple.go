@@ -15,6 +15,31 @@ type Tuple struct {
 	data [111]byte
 }
 
+func NewTuple(minTxId uint64, values []interface{}) *Tuple{
+	var b [111]byte
+
+	/*
+	i := 0
+	for _, v := range values{
+		switch concrete := v.(type) {
+		case int:
+			binary.BigEndian.PutUint32(b[i:i+4], uint32(concrete))
+			i+=4
+		case string:
+			// utf32 := []byte(concrete)
+			// b[i] = len(concrete)
+
+		}
+	}
+	*/
+
+	return &Tuple{
+		minTxId:minTxId,
+		length:uint8(len(values)),
+		data:b,
+	}
+}
+
 func SerializeTuple(t Tuple) ([TupleSize]byte, error){
 	var b [TupleSize]byte
 

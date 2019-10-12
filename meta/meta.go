@@ -1,6 +1,6 @@
 package meta
 
-// Scheme is the definition of tables and Columns
+// Table is the definition of tables and Columns
 type Scheme struct {
 	TblName string `json:"tblName"`
 	ColNames []string `json:"colNames"`

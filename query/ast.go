@@ -37,7 +37,6 @@ type Where struct {
 	Cond []Expr
 }
 
-
 // expressions
 type Expr interface {
 	exprNode()
