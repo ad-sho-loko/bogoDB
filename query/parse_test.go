@@ -68,3 +68,26 @@ func TestParseSelect(t *testing.T){
 	assert.Equal(t, "users", n.From.TableNames[0])
 	assert.Equal(t, "id", n.ColNames[0])
 }
+
+
+func TestParseInsert(t *testing.T){
+	tokens := []*Token{
+		{kind:INSERT},
+		{kind:INTO},
+		{kind:STRING, str:"users"},
+		{kind:VALUES},
+		{kind:LPAREN},
+		{kind:NUMBER, str:"1"},
+		{kind:RPAREN},
+	}
+
+	p := NewParser(tokens)
+	node, err := p.Parse()
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	n := node.(*InsertStmt)
+	assert.Equal(t, "users", n.TableName)
+	assert.Equal(t, "1", n.Values[0].(*Lit).v)
+}

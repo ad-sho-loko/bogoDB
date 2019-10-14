@@ -39,6 +39,7 @@ type Table struct {
 type Column struct {
 	Name string
 	ctype string
+	Primary bool
 }
 
 type ColType uint8

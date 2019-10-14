@@ -32,6 +32,8 @@ func (b *bufferTag) hash() [16]byte{
 }
 
 type pageDescriptor struct {
+	tableName string
+	pgid uint64
 	dirty bool
 	ref uint64
 	page *Page
@@ -47,11 +49,11 @@ func (b *bufferPool) toPid(tid uint64) uint64{
 	return tid / TupleNumber
 }
 
-func (b *bufferPool) pinDirty(pg *pageDescriptor){
+func (b *bufferPool) pinPage(pg *pageDescriptor){
 	pg.ref++
 }
 
-func (b *bufferPool) unpinDirty(pg *pageDescriptor){
+func (b *bufferPool) unpinPage(pg *pageDescriptor){
 	pg.ref--
 }
 
@@ -73,6 +75,7 @@ func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool{
 	// latestTid := 0
 	// pgid := b.toPid(latestTid)
 
+	// TODO
 	bt := newBufferTag(tableName, 0)
 
 	hash := bt.hash()
@@ -98,6 +101,8 @@ func (b *bufferPool) putPage(tableName string, pgid uint64, p *Page) (bool, *Pag
 	bt := newBufferTag(tableName, pgid)
 
 	pd := &pageDescriptor{
+		tableName:tableName,
+		pgid:pgid,
 		page:p,
 		ref:0,
 		dirty:false,

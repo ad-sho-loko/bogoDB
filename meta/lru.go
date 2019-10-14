@@ -14,7 +14,7 @@ type Lru struct {
 }
 
 type entry struct {
-	key interface{}
+	key   interface{}
 	value interface{}
 }
 
@@ -69,4 +69,12 @@ func (l *Lru) removeOldest(){
 
 func (l *Lru) needEvict() bool{
 	return l.Len() > l.cap
+}
+
+func (l *Lru) GetAll() []interface{}{
+	var items []interface{}
+	for _, item := range l.items{
+		items = append(items, item.Value.(*entry).value)
+	}
+	return items
 }

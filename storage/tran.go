@@ -5,65 +5,54 @@ import (
 )
 
 type TransactionManager struct {
-	// it may overflow someday.
-	currentTxid uint64
+	clogs map[uint64]*Transaction
+	currentTxid uint64 // it may overflow someday.
 }
 
 type Transaction struct {
 	txid uint64
-	tuples []*Tuple
-	// modifiedTuples
-	storage *Storage
+	state TransactionState
 }
+
+type TransactionState int
+
+const (
+	Commited TransactionState = iota + 1
+	InProgress
+	Abort
+)
 
 func NewTransactionManager() *TransactionManager{
 	return &TransactionManager{
-		// it should be persisted when a server shutdown.
+		clogs:make(map[uint64]*Transaction),
+		// FIXME : it should be persisted when a server shutdown.
 		currentTxid:0,
 	}
 }
 
 func (t *TransactionManager) newTxid() uint64{
+	// txid starts from 1.
 	return atomic.AddUint64(&t.currentTxid, 1)
 }
 
-func (t *TransactionManager) BeginTransaction(tuples []*Tuple, storage *Storage) *Transaction{
-	return &Transaction{
-		txid:t.newTxid(),
-		tuples:tuples,
-		storage:storage,
+func (t *TransactionManager) BeginTransaction() *Transaction{
+	txid := t.newTxid()
+	tx := &Transaction{
+		txid:txid,
+		state:InProgress,
 	}
+	t.clogs[txid] = tx
+	return tx
 }
 
 func (t *Transaction) Txid() uint64{
 	return t.txid
 }
 
-func (t *Transaction) Commit(tableName string, tuples []*Tuple){
-	for _, tuple := range tuples{
-		t.storage.InsertTuple(tableName, tuple)
-	}
+func (t *TransactionManager) Commit(tran *Transaction){
+	tran.state = Commited
 }
 
-func (t *Transaction) Rollback(){
+func (t *TransactionManager) Abort(tran *Transaction){
+	tran.state = Abort
 }
-
-/*
-type LockManager struct {
-	locks map[uint64]sync.RWMutex
-}
-
-func (l *LockManager) LockShared(tid uint64){
-	l.locks[tid].RLock()
-}
-
-func LockShared(tid uint64){
-}
-
-func LockExclusive(tid uint64){
-}
-
-func (l *LockManager) UnLock(tid uint64){
-	l.locks[tid].RUnlock()
-}
-*/

@@ -4,6 +4,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 )
 
 // diskManager is responsible for fetching pages from the disk.
@@ -24,8 +25,9 @@ func (d *diskManager) fetchPageByTid(tableName string, tid uint64) (*Page, error
 	return d.fetchPage(tableName, pid)
 }
 
-func (d *diskManager) fetchPage(tableName string, pid uint64) (*Page, error){
-	pagePath := path.Join(tableName, string(pid))
+func (d *diskManager) fetchPage(tableName string, pgid uint64) (*Page, error){
+	fileName := strconv.FormatUint(pgid, 10)
+	pagePath := path.Join(tableName, fileName)
 
 	_, err := os.Stat(pagePath)
 	if os.IsNotExist(err){
@@ -42,12 +44,14 @@ func (d *diskManager) fetchPage(tableName string, pid uint64) (*Page, error){
 	return DeserializePage(b)
 }
 
-func (d *diskManager) persist(tableName string, page *Page) error{
+func (d *diskManager) persist(tableName string, pgid uint64, page *Page) error{
 	b, err := SerializePage(page)
 
 	if err != nil{
 		return err
 	}
 
-	return ioutil.WriteFile(tableName, b[:], 0644)
+	fileName := strconv.FormatUint(pgid, 10)
+	savePath := path.Join(tableName, fileName)
+	return ioutil.WriteFile(savePath, b[:], 0644)
 }

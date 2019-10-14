@@ -75,7 +75,7 @@ func (db *BogoDb) Execute(q string) error{
 	plan, _ := planner.PlanMain()
 
 	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
-	return executor.ExecuteMain(analyzedQuery, plan)
+	return executor.ExecuteMain(analyzedQuery, plan, nil)
 }
 
 func (db *BogoDb) Terminate(){
@@ -83,5 +83,11 @@ func (db *BogoDb) Terminate(){
 	if err == nil{
 		log.Printf("catalog.db has completely saved in %s\n", "./")
 	}
+
+	err = db.storage.Terminate()
+	if err == nil{
+		log.Printf("page has completely saved in %s\n", "./")
+	}
+
 	os.Exit(0)
 }

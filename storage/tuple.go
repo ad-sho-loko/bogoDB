@@ -7,7 +7,7 @@ import (
 const TupleSize = 128
 
 // Tuple is the actual user's data stored in a `Page`.
-// A general tuple should be variable, but bodoDB's one is fixed in 128 byte
+// A general size of the tuple should be variable, but bodoDB's one is fixed in 128 byte
 type Tuple struct {
 	minTxId uint64 // txId when inserted
 	maxTxId uint64 // txId when updated
@@ -67,4 +67,16 @@ func DeserializeTuple(b [TupleSize]byte) (Tuple, error){
 func (t *Tuple) IsUnused() bool{
 	// If minTxId is zero, it's an empty tuple.
 	return t.minTxId == 0
+}
+
+func (t *Tuple) CanSee(tran *Transaction) bool{
+	if t.minTxId == tran.txid{
+		return true
+	}
+
+	if t.maxTxId < tran.Txid(){
+		return false
+	}
+
+	return true
 }

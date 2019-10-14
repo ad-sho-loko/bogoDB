@@ -22,11 +22,18 @@ type (
 		From *From
 		Wheres []Expr
 	}
+
+	UpdateStmt struct {
+ 		TableName string
+		ColNames []string
+		Set []Expr
+	}
 )
 
 func (s *CreateTableStmt) stmtNode(){}
 func (s *InsertStmt) stmtNode(){}
 func (s *SelectStmt) stmtNode(){}
+func (s *UpdateStmt) stmtNode(){}
 
 // clauses
 type From struct {

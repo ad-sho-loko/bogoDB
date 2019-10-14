@@ -7,11 +7,17 @@ Inspired by CMU Database Group's Lecture (of course not homework!)
 
 - SQL
     - create table
-    - insert 
-    - select clause(from, where)
-- Index
+    - insert statment
+    - select statement(from, where)
+    - update statment
+- Index(with b-tree)
+- Buffer on memory
 - Concurrency(only transaction)
-- not mmap implementation!
+- not mmap implementation
+
+## Author
+
+Shogo Arakawa
 
 ## LICENSE
 

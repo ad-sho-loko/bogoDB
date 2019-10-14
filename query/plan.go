@@ -25,6 +25,7 @@ type(
 	}
 
 	IndexScan struct {
+		tblName string
 		indexName string
 	}
 )
@@ -36,8 +37,32 @@ func NewPlanner(q Query) *Planner{
 }
 
 func (p *Planner) planSelect(q *SelectQuery) (*Plan, error){
+	// if where contains a primary key, use index scan.
+	for _, w := range q.Where{
+		eq, ok := w.(*Eq)
+		if !ok{
+			continue
+		}
+		col, ok := eq.left.(*Lit)
+		if !ok{
+			continue
+		}
+		for _, c := range q.Cols{
+			if col.v == c.Name && c.Primary{
+				return &Plan{
+					scanners:&IndexScan{
+						tblName:q.From[0].Name,
+						indexName:col.v,
+					},
+				}, nil
+			}
+		}
+	}
+
+	// use seqscan
 	return &Plan{
 		scanners:&SeqScan{
+			// FIXME
 			tblName:q.From[0].Name,
 		},
 	}, nil
@@ -48,7 +73,10 @@ func (p *Planner) PlanMain() (*Plan, error){
 	case *SelectQuery:
 		return p.planSelect(concrete)
 	case *CreateTableQuery:
-		// do nothing
+		return nil, nil
+	case *InsertQuery:
+		return nil, nil
+	case *UpdateQuery:
 		return nil, nil
 	}
 	return nil, errors.New("unexpected query when planning")

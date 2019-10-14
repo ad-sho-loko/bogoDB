@@ -30,6 +30,8 @@ const(
 	operator_begin
 	LBRACE
 	RBRACE
+	LPAREN
+	RPAREN
 	COMMA
 	STAR
 	EQ
@@ -44,6 +46,11 @@ const(
 	INSERT
 	INTO
 	VALUES
+	UPDATE
+	SET
+	BEGIN
+	COMMIT
+	ROLLBACK
 	keyword_end
 )
 
@@ -55,7 +62,10 @@ var tokens = [...]string{
 	INT:"Int",
 	LBRACE:"{",
 	RBRACE:"}",
+	LPAREN:"(",
+	RPAREN:")",
 	COMMA:",",
+	STAR:"*",
 	SELECT:"Select",
 	FROM:"From",
 	WHERE:"Where",
@@ -64,6 +74,11 @@ var tokens = [...]string{
 	INSERT:"Insert",
 	INTO:"Into",
 	VALUES:"Values",
+	UPDATE:"Update",
+	SET:"Set",
+	BEGIN:"Begin",
+	COMMIT:"Commit",
+	ROLLBACK:"Abort",
 }
 
 func (t TokenKind) String() string{
@@ -187,6 +202,31 @@ func (t *Tokenizer) Tokenize() ([]*Token, error){
 			continue
 		}
 
+		if t.matchKeyWord("update"){
+			tokens = append(tokens, &Token{ kind : UPDATE })
+			continue
+		}
+
+		if t.matchKeyWord("set"){
+			tokens = append(tokens, &Token{ kind : SET })
+			continue
+		}
+
+		if t.matchKeyWord("begin"){
+			tokens = append(tokens, &Token{ kind : BEGIN })
+			continue
+		}
+
+		if t.matchKeyWord("commit"){
+			tokens = append(tokens, &Token{ kind : COMMIT })
+			continue
+		}
+
+		if t.matchKeyWord("rollback"){
+			tokens = append(tokens, &Token{ kind : ROLLBACK })
+			continue
+		}
+
 		if t.isNumber(){
 			num := t.scanNumber()
 			tkn := NewToken(NUMBER, num)
@@ -204,6 +244,8 @@ func (t *Tokenizer) Tokenize() ([]*Token, error){
 		switch t.input[t.pos] {
 		case '{': tokens = append(tokens, &Token{ kind : LBRACE})
 		case '}': tokens = append(tokens, &Token{ kind : RBRACE})
+		case '(': tokens = append(tokens, &Token{ kind : LPAREN})
+		case ')': tokens = append(tokens, &Token{ kind : RPAREN})
 		case ',': tokens = append(tokens, &Token{ kind : COMMA})
 		case '*': tokens = append(tokens, &Token{ kind : STAR})
 		case '=': tokens = append(tokens, &Token{ kind : EQ})

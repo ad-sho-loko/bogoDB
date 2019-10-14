@@ -20,13 +20,19 @@ type Query interface {
 }
 
 type SelectQuery struct {
-	Col []*meta.Column
-	From []*meta.Table
-	Where Expr
+	Cols  []*meta.Column
+	From  []*meta.Table
+	Where []Expr
 }
 
 type CreateTableQuery struct {
 	Scheme *meta.Scheme
+}
+
+type UpdateQuery struct {
+	Table  *meta.Table
+	Cols []*meta.Column
+	Set []interface{}
 }
 
 type InsertQuery struct {
@@ -37,6 +43,7 @@ type InsertQuery struct {
 func (q *SelectQuery) evalQuery(){}
 func (q *InsertQuery) evalQuery(){}
 func (q *CreateTableQuery) evalQuery(){}
+func (q *UpdateQuery) evalQuery(){}
 
 func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
 	return &Analyzer{
@@ -68,7 +75,8 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 		lits = append(lits, num.v)
 	}
 
-	var values []interface{}
+	// FIXME
+ 	var values []interface{}
 	for i, v := range lits{
 		if scheme.ColTypes[i] == meta.Int{
 			n, _ := strconv.Atoi(v)
@@ -106,7 +114,10 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 			for _, col := range scheme.ColNames{
 				if col == colName{
 					found = true
-					// cols = append(cols, )
+					col := &meta.Column{
+						Name:colName,
+					}
+					cols = append(cols, col)
 				}
 			}
 		}
@@ -116,6 +127,23 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 		}
 	}
 
+	// analyze `where`
+
+	/*
+	for _, e := range n.Wheres{
+		eq, ok := e.(*Eq)
+		if !ok{
+		}
+
+		// left must be col-name.
+		colName := eq.left.(*Lit).v
+		for _, col := range cols{
+			if col.Name == colName{
+
+			}
+		}
+	}
+	*/
 
 	var tables []*meta.Table
 	for _, s := range schemes{
@@ -124,7 +152,32 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 	}
 
 	q.From = tables
-	q.Col = cols
+	q.Cols = cols
+	q.Where = n.Wheres
+	return &q, nil
+}
+
+func (a *Analyzer) analyzeUpdate(n *UpdateStmt) (*UpdateQuery, error) {
+	var q UpdateQuery
+
+	// analyze `update`
+	if !a.catalog.HasScheme(n.TableName){
+		return nil, fmt.Errorf("insert failed : `%s` doesn't exists", n.TableName)
+	}
+	t := &meta.Table{
+		Name:n.TableName,
+	}
+
+	// analyze `set`
+	// scheme := a.catalog.FetchScheme(n.TableName)
+	/*
+	var values []interface{}
+	for _, v := range n.Set{
+		return nil, fmt.Errorf("insert failed : unexpected types parsed")
+	}
+	*/
+
+	q.Table = t
 	return &q, nil
 }
 
@@ -156,6 +209,8 @@ func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error){
 		return a.analyzeCreateTable(concrete)
 	case *InsertStmt:
 		return a.analyzeInsert(concrete)
+	case *UpdateStmt:
+		return a.analyzeUpdate(concrete)
 	}
 
 	return nil, fmt.Errorf("failed to analyze query")

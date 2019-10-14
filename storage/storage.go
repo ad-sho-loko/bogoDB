@@ -20,7 +20,7 @@ func (s *Storage) insertPage(tableName string){
 
 	if isNeedPersist {
 		// if a victim is dirty, its data must be persisted in the disk now.
-		if err := s.disk.persist(tableName, victim); err != nil{
+		if err := s.disk.persist(tableName, pgid, victim); err != nil{
 		}
 	}
 }
@@ -30,6 +30,9 @@ func (s *Storage) InsertTuple(tablename string, t *Tuple){
 		// if not exist in buffer, put a page to lru-cache
 		s.insertPage(tablename)
 	}
+}
+
+func (s *Storage) ReadIndex(indexName string){
 }
 
 func (s *Storage) ReadTuple(tableName string, tid uint64) (*Tuple, error){
@@ -63,4 +66,18 @@ func (s *Storage) readPage(tableName string, pgid uint64) (*Page, error){
 	s.buffer.putPage(tableName, pgid, pg)
 
 	return pg, nil
+}
+
+func (s *Storage) Terminate() error{
+	items := s.buffer.lru.GetAll()
+	for _, item := range items{
+		pd := item.(*pageDescriptor)
+		if pd.dirty{
+			err := s.disk.persist(pd.tableName, pd.pgid, pd.page)
+			if err != nil{
+				return nil
+			}
+		}
+	}
+	return nil
 }

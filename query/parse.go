@@ -85,12 +85,10 @@ func (p *Parser) fromClause() *From{
 	}
 }
 
-func (p *Parser) whereClause() *Where{
+func (p *Parser) whereClause() []Expr{
 	var exprs []Expr
 	exprs = append(exprs, p.eq())
-	return &Where{
-		Cond:exprs,
-	}
+	return exprs
 }
 
 func (p *Parser) selectStmt() Stmt{
@@ -109,21 +107,47 @@ func (p *Parser) selectStmt() Stmt{
 
 	// where
 	if p.consume(WHERE){
+		selectNode.Wheres = p.whereClause()
 	}
 
 	return selectNode
+}
+
+func (p *Parser) updateTableStmt() Stmt{
+	tblName := p.expect(STRING)
+	p.expect(SET)
+
+	var cols []string
+	var exprs []Expr
+
+	for{
+		expr := p.expr()
+		exprs = append(exprs, expr)
+		if !p.consume(COMMA){
+			break
+		}
+	}
+
+	return &UpdateStmt{
+		TableName:tblName.str,
+		ColNames:cols,
+		Set:exprs,
+	}
 }
 
 func (p *Parser) insertTableStmt() Stmt{
 	p.expect(INTO)
 	tblName := p.expect(STRING)
 	p.expect(VALUES)
-	p.expect(LBRACE) // FIXME : bug
+	p.expect(LPAREN)
 
 	var exprs []Expr
-	for !p.consume(RBRACE){
+	for {
 		exprs = append(exprs, p.eq())
-		p.consume(COMMA)
+		if p.consume(RPAREN){
+			break
+		}
+		p.expect(COMMA)
 	}
 
 	return &InsertStmt{
@@ -173,6 +197,11 @@ func (p *Parser) Parse() (Stmt, []error){
 	// insert
 	if p.consume(INSERT){
 		return p.insertTableStmt(), p.errors
+	}
+
+	// update
+	if p.consume(UPDATE){
+		return p.updateTableStmt(), p.errors
 	}
 
 	// unexpected query comes

@@ -20,6 +20,7 @@ func NewExecutor(storage *storage.Storage, catalog *storage.Catalog, tranManger 
 	}
 }
 
+// SeqScan
 func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 	var result []*storage.Tuple
 
@@ -41,56 +42,73 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 	return result
 }
 
-/*
-func (e *Executor) execExpr(expr Expr){
-	eq := expr.(*Eq)
+func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple{
+	var result []*storage.Tuple
+	store.ReadIndex(s.indexName)
+	return result
 }
-*/
 
-func (e *Executor) selectTable(q *SelectQuery, p *Plan) error{
+func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) error{
 	// from
 	tuples := p.scanners.Scan(e.storage)
 
 	// where
 	// q.Where
 
-	// select
-	// q.Col.n
-
-	// print tuples!
 	for _, t := range tuples{
-		fmt.Println(t)
+		if tran == nil || t.CanSee(tran){
+			fmt.Println(t)
+		}
 	}
 
 	return nil
 }
 
-func (e *Executor) insertTable(w *InsertQuery) error{
-	if !e.catalog.HasScheme(w.Table.Name){
-		return fmt.Errorf("insert failed : `%s` doesn't exists", w.Table.Name)
+func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
+	inTransaction := tran != nil
+
+	if !inTransaction {
+		tran = e.beginTransaction()
 	}
 
-	var tuples []*storage.Tuple
-	tx := e.tranManager.BeginTransaction(nil, e.storage)
-	t := storage.NewTuple(tx.Txid(), w.Values)
-	tuples = append(tuples, t)
-	tx.Commit(w.Table.Name, tuples)
-	return nil
+	t := storage.NewTuple(tran.Txid(), w.Values)
+	e.storage.InsertTuple(w.Table.Name, t)
 
+	if !inTransaction{
+		e.commitTransaction(tran)
+	}
+
+	return nil
+}
+
+func (e *Executor) updateTable(q *UpdateQuery) {
 }
 
 func (e *Executor) createTable(q *CreateTableQuery) error {
 	return e.catalog.Add(q.Scheme)
 }
 
-func (e *Executor) ExecuteMain(q Query, p *Plan) error{
+func (e *Executor) beginTransaction() *storage.Transaction{
+	return e.tranManager.BeginTransaction()
+}
+
+func (e *Executor) commitTransaction(tran *storage.Transaction){
+	e.tranManager.Commit(tran)
+}
+
+func (e *Executor) abortTransaction(tran *storage.Transaction){
+	e.tranManager.Abort(tran)
+}
+
+func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) error{
 	switch concrete := q.(type) {
 	case *CreateTableQuery:
 		return e.createTable(concrete)
 	case *InsertQuery:
-		return e.insertTable(concrete)
+		err := e.insertTable(concrete, nil)
+		return err
 	case *SelectQuery:
-		return e.selectTable(concrete, p)
+		return e.selectTable(concrete, p, nil)
 	}
 
 	return errors.New("failed to execute query")
