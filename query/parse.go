@@ -204,6 +204,18 @@ func (p *Parser) Parse() (Stmt, []error){
 		return p.updateTableStmt(), p.errors
 	}
 
+	if p.consume(BEGIN){
+		return &BeginStmt{}, nil
+	}
+
+	if p.consume(COMMIT){
+		return &CommitStmt{}, nil
+	}
+
+	if p.consume(ROLLBACK){
+		return &AbortStmt{}, nil
+	}
+
 	// unexpected query comes
 	p.errors = append(p.errors, errors.New("unexpected query"))
 	return nil, p.errors

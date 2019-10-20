@@ -10,9 +10,14 @@ import (
 
 type BogoDb struct {
 	exit chan int
+	contexts map[string]*dbContext
 	storage *storage.Storage
 	catalog *storage.Catalog
 	tranManager *storage.TransactionManager
+}
+
+type dbContext struct {
+	tran *storage.Transaction
 }
 
 func NewBogoDb() (*BogoDb, error){
@@ -32,6 +37,7 @@ func NewBogoDb() (*BogoDb, error){
 		catalog:catalog,
 		storage:storage.NewStorage(),
 		tranManager:storage.NewTransactionManager(),
+		contexts:make(map[string]*dbContext),
 		exit:make(chan int, 1),
 	}, nil
 }
@@ -52,7 +58,14 @@ func (db *BogoDb) Init(){
 	}()
 }
 
-func (db *BogoDb) Execute(q string) error{
+func (db *BogoDb) Execute(q string, userAgent string) error{
+	var trn *storage.Transaction
+
+	ctx, found := db.contexts[userAgent]
+	if found{
+		trn = ctx.tran
+	}
+
 	tokenizer := query.NewTokenizer(q)
 	tokens, err := tokenizer.Tokenize()
 	if err != nil{
@@ -62,7 +75,8 @@ func (db *BogoDb) Execute(q string) error{
 	parser := query.NewParser(tokens)
 	node, errs := parser.Parse()
 	if len(errs) != 0{
-		return errs[0] // show first error message anyway...
+		// show first error message anyway...
+		return errs[0]
 	}
 
 	analyzer := query.NewAnalyzer(db.catalog)
@@ -75,7 +89,8 @@ func (db *BogoDb) Execute(q string) error{
 	plan, _ := planner.PlanMain()
 
 	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
-	return executor.ExecuteMain(analyzedQuery, plan, nil)
+	err = executor.ExecuteMain(analyzedQuery, plan, trn)
+	return err
 }
 
 func (db *BogoDb) Terminate(){

@@ -72,11 +72,9 @@ func (p *Planner) PlanMain() (*Plan, error){
 	switch concrete := p.q.(type) {
 	case *SelectQuery:
 		return p.planSelect(concrete)
-	case *CreateTableQuery:
+	case *CreateTableQuery, *InsertQuery, *UpdateQuery:
 		return nil, nil
-	case *InsertQuery:
-		return nil, nil
-	case *UpdateQuery:
+	case *BeginQuery, *CommitQuery, *AbortQuery:
 		return nil, nil
 	}
 	return nil, errors.New("unexpected query when planning")

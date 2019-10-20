@@ -1,80 +1,70 @@
 package storage
 
 import (
-	"encoding/binary"
+	"github.com/gogo/protobuf/proto"
 )
 
-const TupleSize = 128
-
-// Tuple is the actual user's data stored in a `Page`.
-// A general size of the tuple should be variable, but bodoDB's one is fixed in 128 byte
-type Tuple struct {
-	minTxId uint64 // txId when inserted
-	maxTxId uint64 // txId when updated
-	length uint8
-	data [111]byte
-}
-
 func NewTuple(minTxId uint64, values []interface{}) *Tuple{
-	var b [111]byte
+	var t Tuple
+	t.MinTxId = minTxId
+	t.MaxTxId = minTxId
 
-	i := 0
-	length := uint8(0)
+	var td *TupleData
 	for _, v := range values{
 		switch concrete := v.(type) {
 		case int:
-			binary.BigEndian.PutUint32(b[i:i+4], uint32(concrete))
-			length++
-			i+=4
+			td = &TupleData{
+				Type:TupleData_INT,
+				Number:*proto.Int32(int32(concrete)),
+			}
 		case string:
-			// b[i] = uint8(len(concrete))
-			// utf32 := []byte(concrete)
-			// utf2
-			length++
+			td = &TupleData{
+				Type:TupleData_STRING,
+				String_:*proto.String(concrete),
+			}
 		}
+
+		t.Data = append(t.Data, td)
 	}
 
-	return &Tuple{
-		minTxId:minTxId,
-		maxTxId:minTxId,
-		length:length,
-		data:b,
-	}
+	return &t
 }
 
-func SerializeTuple(t Tuple) ([TupleSize]byte, error){
-	var b [TupleSize]byte
+func SerializeTuple(t *Tuple) ([128]byte, error){
+	out, err := proto.Marshal(t)
 
-	binary.BigEndian.PutUint64(b[0:8], t.minTxId)
-	binary.BigEndian.PutUint64(b[8:16], t.maxTxId)
-	b[16] = t.length
-	copy(b[17:], t.data[:])
+	if err != nil{
+		return [128]byte{}, err
+	}
+
+	var b [128]byte
+	copy(b[:], out)
 
 	return b, nil
 }
 
-func DeserializeTuple(b [TupleSize]byte) (Tuple, error){
+func DeserializeTuple(b [128]byte) (*Tuple, error){
 	var t Tuple
 
-	t.minTxId = binary.BigEndian.Uint64(b[0:8])
-	t.maxTxId = binary.BigEndian.Uint64(b[8:16])
-	t.length = b[16]
-	copy(t.data[:], b[17:])
+	err := proto.Unmarshal(b[:], &t)
+	if err != nil{
+		// return nil, err
+	}
 
-	return t, nil
+	return &t, nil
 }
 
-func (t *Tuple) IsUnused() bool{
+func (m *Tuple) IsUnused() bool{
 	// If minTxId is zero, it's an empty tuple.
-	return t.minTxId == 0
+	return m.MinTxId == 0
 }
 
-func (t *Tuple) CanSee(tran *Transaction) bool{
-	if t.minTxId == tran.txid{
+func (m *Tuple) CanSee(tran *Transaction) bool{
+	if m.MinTxId == tran.txid{
 		return true
 	}
 
-	if t.maxTxId < tran.Txid(){
+	if m.MaxTxId < tran.Txid(){
 		return false
 	}
 

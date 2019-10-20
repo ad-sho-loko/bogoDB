@@ -40,10 +40,23 @@ type InsertQuery struct {
 	Values []interface{}
 }
 
+type BeginQuery struct {
+}
+
+type CommitQuery struct {
+}
+
+type AbortQuery struct {
+}
+
 func (q *SelectQuery) evalQuery(){}
 func (q *InsertQuery) evalQuery(){}
 func (q *CreateTableQuery) evalQuery(){}
 func (q *UpdateQuery) evalQuery(){}
+func (q *BeginQuery) evalQuery(){}
+func (q *CommitQuery) evalQuery(){}
+func (q *AbortQuery) evalQuery(){}
+
 
 func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
 	return &Analyzer{
@@ -211,6 +224,12 @@ func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error){
 		return a.analyzeInsert(concrete)
 	case *UpdateStmt:
 		return a.analyzeUpdate(concrete)
+	case *BeginStmt:
+		return &BeginQuery{}, nil
+	case *CommitStmt:
+		return &CommitQuery{}, nil
+	case *AbortStmt:
+		return &AbortQuery{}, nil
 	}
 
 	return nil, fmt.Errorf("failed to analyze query")

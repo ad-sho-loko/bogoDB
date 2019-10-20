@@ -53,8 +53,9 @@ func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transactio
 	tuples := p.scanners.Scan(e.storage)
 
 	// where
-	// q.Where
 
+
+	// q.Where
 	for _, t := range tuples{
 		if tran == nil || t.CanSee(tran){
 			fmt.Println(t)
@@ -102,13 +103,21 @@ func (e *Executor) abortTransaction(tran *storage.Transaction){
 
 func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) error{
 	switch concrete := q.(type) {
+	case *BeginQuery:
+		e.beginTransaction()
+		return nil
+	case *CommitQuery:
+		e.commitTransaction(tran)
+		return nil
+	case *AbortQuery:
+		e.abortTransaction(tran)
+		return nil
 	case *CreateTableQuery:
 		return e.createTable(concrete)
 	case *InsertQuery:
-		err := e.insertTable(concrete, nil)
-		return err
+		return e.insertTable(concrete, tran)
 	case *SelectQuery:
-		return e.selectTable(concrete, p, nil)
+		return e.selectTable(concrete, p, tran)
 	}
 
 	return errors.New("failed to execute query")

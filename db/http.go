@@ -25,7 +25,7 @@ func (a *ApiServer) executeHandler(w http.ResponseWriter, r *http.Request){
 		return
 	}
 
-	err := a.db.Execute(q[0])
+	err := a.db.Execute(q[0], r.UserAgent())
 	if err != nil{
 		w.WriteHeader(http.StatusBadRequest)
 		log.Println(err)

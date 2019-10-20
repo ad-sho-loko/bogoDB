@@ -10,11 +10,12 @@ import (
 func TestTxidAtomicity(t *testing.T){
 	var wg sync.WaitGroup
 	var exists [100001]bool
+	var manager *TransactionManager
 
 	for i:=0; i<100000; i++{
 		wg.Add(1)
 		go func(){
-			id := newTxid()
+			id := manager.newTxid()
 
 			if exists[id]{
 				log.Fatal("txid duplicated")
@@ -26,5 +27,5 @@ func TestTxidAtomicity(t *testing.T){
 	}
 
 	wg.Wait()
-	assert.Equal(t, uint64(100000), currentTxid)
+	assert.Equal(t, uint64(100000), manager.currentTxid)
 }

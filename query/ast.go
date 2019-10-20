@@ -28,12 +28,24 @@ type (
 		ColNames []string
 		Set []Expr
 	}
+
+	BeginStmt struct {
+	}
+
+	CommitStmt struct {
+	}
+
+	AbortStmt struct {
+	}
 )
 
 func (s *CreateTableStmt) stmtNode(){}
 func (s *InsertStmt) stmtNode(){}
 func (s *SelectStmt) stmtNode(){}
 func (s *UpdateStmt) stmtNode(){}
+func (s *BeginStmt) stmtNode(){}
+func (s *CommitStmt) stmtNode(){}
+func (s *AbortStmt) stmtNode(){}
 
 // clauses
 type From struct {
