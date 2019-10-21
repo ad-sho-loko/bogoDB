@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"github.com/ad-sho-loko/bogodb/meta"
 	"io/ioutil"
 	"os"
 	"path"
@@ -53,5 +54,31 @@ func (d *diskManager) persist(tableName string, pgid uint64, page *Page) error{
 
 	fileName := strconv.FormatUint(pgid, 10)
 	savePath := path.Join(tableName, fileName)
+	return ioutil.WriteFile(savePath, b[:], 0644)
+}
+
+func (d *diskManager) readIndex(indexName string) (*meta.BTree, error){
+	readPath := path.Join(indexName)
+	bytes, err := ioutil.ReadFile(readPath)
+	if err != nil{
+		return nil, err
+	}
+
+	btree, err := meta.DeserializeBTree(bytes)
+	if err != nil{
+		return nil, err
+	}
+
+	return btree, nil
+}
+
+func (d *diskManager) writeIndex(indexName string, tree *meta.BTree) error{
+	b, err := meta.SerializeBTree(tree)
+
+	if err != nil{
+		return err
+	}
+
+	savePath := path.Join(indexName)
 	return ioutil.WriteFile(savePath, b[:], 0644)
 }

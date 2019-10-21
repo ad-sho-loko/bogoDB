@@ -8,6 +8,7 @@ import (
 
 type bufferPool struct {
 	lru *meta.Lru
+	btree map[string]*meta.BTree
 }
 
 type bufferTag struct {
@@ -72,11 +73,10 @@ func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error){
 }
 
 func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool{
+	// TODO
 	// latestTid := 0
 	// pgid := b.toPid(latestTid)
-
-	// TODO
-	bt := newBufferTag(tableName, 0)
+	bt := newBufferTag(tableName, NewPgid(tableName))
 
 	hash := bt.hash()
 	p := b.lru.Get(hash)
@@ -116,4 +116,9 @@ func (b *bufferPool) putPage(tableName string, pgid uint64, p *Page) (bool, *Pag
 
 	victim := victimPage.(*pageDescriptor)
 	return victim.dirty, victim.page
+}
+
+func (b *bufferPool) readIndex(indexName string) (bool, *meta.BTree){
+	tree, found := b.btree[indexName]
+	return found, tree
 }

@@ -1,5 +1,7 @@
 package storage
 
+import "github.com/ad-sho-loko/bogodb/meta"
+
 // Storage is the interface of any manipulation of read/write.
 type Storage struct {
 	buffer *bufferPool
@@ -32,7 +34,34 @@ func (s *Storage) InsertTuple(tablename string, t *Tuple){
 	}
 }
 
-func (s *Storage) ReadIndex(indexName string){
+func (s *Storage) CreateIndex(indexName string) error{
+	btree := meta.NewBTree()
+	return s.disk.writeIndex(indexName, btree)
+}
+
+func (s *Storage) InsertIndex(indexName string, item meta.Item) error{
+	btree, err := s.ReadIndex(indexName)
+	if err != nil{
+		return err
+	}
+
+	btree.Insert(item)
+	return nil
+}
+
+func (s *Storage) ReadIndex(indexName string) (*meta.BTree, error){
+	found, index := s.buffer.readIndex(indexName)
+
+	if found{
+		return index, nil
+	}
+
+	btree, err := s.disk.readIndex(indexName)
+	if err != nil{
+		return nil, err
+	}
+
+	return btree, nil
 }
 
 func (s *Storage) ReadTuple(tableName string, tid uint64) (*Tuple, error){
@@ -75,9 +104,17 @@ func (s *Storage) Terminate() error{
 		if pd.dirty{
 			err := s.disk.persist(pd.tableName, pd.pgid, pd.page)
 			if err != nil{
-				return nil
+				return err
 			}
 		}
 	}
+
+	for key, val := range s.buffer.btree{
+		err := s.disk.writeIndex(key, val)
+		if err != nil{
+			return err
+		}
+	}
+
 	return nil
 }

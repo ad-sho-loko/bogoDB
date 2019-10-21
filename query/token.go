@@ -51,6 +51,8 @@ const(
 	BEGIN
 	COMMIT
 	ROLLBACK
+	PRIMARY
+	KEY
 	keyword_end
 )
 
@@ -79,6 +81,8 @@ var tokens = [...]string{
 	BEGIN:"Begin",
 	COMMIT:"Commit",
 	ROLLBACK:"Abort",
+	PRIMARY:"Primary",
+	KEY:"Key",
 }
 
 func (t TokenKind) String() string{
@@ -224,6 +228,16 @@ func (t *Tokenizer) Tokenize() ([]*Token, error){
 
 		if t.matchKeyWord("rollback"){
 			tokens = append(tokens, &Token{ kind : ROLLBACK })
+			continue
+		}
+
+		if t.matchKeyWord("primary"){
+			tokens = append(tokens, &Token{ kind : PRIMARY })
+			continue
+		}
+
+		if t.matchKeyWord("key"){
+			tokens = append(tokens, &Token{ kind : KEY })
 			continue
 		}
 

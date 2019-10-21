@@ -13,6 +13,7 @@ func TestAnalyzeCreateTable(t *testing.T){
 		TableName:"users",
 		ColNames:[]string{"id"},
 		ColTypes:[]string{"int"},
+		PrimaryKey:"id",
 	}
 
 	ctg := storage.NewEmtpyCatalog()

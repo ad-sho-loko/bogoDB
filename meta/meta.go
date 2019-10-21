@@ -5,13 +5,15 @@ type Scheme struct {
 	TblName string `json:"tblName"`
 	ColNames []string `json:"colNames"`
 	ColTypes []ColType `json:"colTypes"`
+	PrimaryKey string `json:"pk"`
 }
 
-func NewScheme(tblName string, colNames []string, colTypes []ColType) *Scheme{
+func NewScheme(tblName string, colNames []string, colTypes []ColType, pk string) *Scheme{
 	return &Scheme{
 		TblName:tblName,
 		ColNames:colNames,
 		ColTypes:colTypes,
+		PrimaryKey:pk,
 	}
 }
 
@@ -23,7 +25,7 @@ func (s *Scheme) ConvertTable() *Table{
 	for i := range s.ColNames{
 		var col Column
 		col.Name = s.ColNames[i]
-		col.ctype = string(s.ColTypes[i])
+		col.Type = string(s.ColTypes[i])
 		columns = append(columns, col)
 	}
 
@@ -37,8 +39,8 @@ type Table struct {
 }
 
 type Column struct {
-	Name string
-	ctype string
+	Name    string
+	Type    string
 	Primary bool
 }
 

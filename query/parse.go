@@ -118,20 +118,33 @@ func (p *Parser) updateTableStmt() Stmt{
 	p.expect(SET)
 
 	var cols []string
-	var exprs []Expr
+	var sets []interface{}
 
 	for{
-		expr := p.expr()
-		exprs = append(exprs, expr)
+		col := p.expect(STRING)
+		cols = append(cols, col.str)
+
+		p.expect(EQ)
+
+		set := p.expectOr(STRING ,NUMBER)
+		sets = append(sets, set.str)
+
 		if !p.consume(COMMA){
 			break
 		}
 	}
 
+	// where
+	var exprs []Expr
+	if p.consume(WHERE){
+		exprs = p.whereClause()
+	}
+
 	return &UpdateStmt{
 		TableName:tblName.str,
 		ColNames:cols,
-		Set:exprs,
+		Set:sets,
+		Where:exprs,
 	}
 }
 
@@ -163,12 +176,18 @@ func (p *Parser) createTableStmt() Stmt{
 
 	var colNames []string
 	var colTypes []string
+	var pk string
 
 	for{
 		colName := p.expect(STRING)
 		p.expect(INT)
 		colNames = append(colNames, colName.str)
 		colTypes = append(colTypes, "int")
+		if p.consume(PRIMARY){
+			p.expect(KEY)
+			pk = colName.str
+		}
+
 		if !p.consume(COMMA){
 			break
 		}
@@ -180,6 +199,7 @@ func (p *Parser) createTableStmt() Stmt{
 		TableName:tblName.str,
 		ColNames:colNames,
 		ColTypes:colTypes,
+		PrimaryKey:pk,
 	}
 }
 

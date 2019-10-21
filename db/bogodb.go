@@ -10,13 +10,13 @@ import (
 
 type BogoDb struct {
 	exit chan int
-	contexts map[string]*dbContext
+	contexts map[string]*dbSession
 	storage *storage.Storage
 	catalog *storage.Catalog
 	tranManager *storage.TransactionManager
 }
 
-type dbContext struct {
+type dbSession struct {
 	tran *storage.Transaction
 }
 
@@ -37,7 +37,7 @@ func NewBogoDb() (*BogoDb, error){
 		catalog:catalog,
 		storage:storage.NewStorage(),
 		tranManager:storage.NewTransactionManager(),
-		contexts:make(map[string]*dbContext),
+		contexts:make(map[string]*dbSession),
 		exit:make(chan int, 1),
 	}, nil
 }

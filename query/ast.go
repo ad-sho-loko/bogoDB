@@ -10,6 +10,7 @@ type (
 		TableName string
 		ColNames []string
 		ColTypes []string
+		PrimaryKey string
 	}
 
 	InsertStmt struct {
@@ -26,7 +27,8 @@ type (
 	UpdateStmt struct {
  		TableName string
 		ColNames []string
-		Set []Expr
+ 		Set []interface{}
+		Where []Expr
 	}
 
 	BeginStmt struct {

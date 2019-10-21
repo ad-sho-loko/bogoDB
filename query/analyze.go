@@ -1,6 +1,7 @@
 package query
 
 import (
+	"errors"
 	"fmt"
 	"github.com/ad-sho-loko/bogodb/meta"
 	"github.com/ad-sho-loko/bogodb/storage"
@@ -33,11 +34,13 @@ type UpdateQuery struct {
 	Table  *meta.Table
 	Cols []*meta.Column
 	Set []interface{}
+	Where []Expr
 }
 
 type InsertQuery struct {
 	Table  *meta.Table
 	Values []interface{}
+	Index string
 }
 
 type BeginQuery struct {
@@ -101,6 +104,12 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 		}
 	}
 
+	for _, c := range t.Columns{
+		if c.Primary{
+			q.Index = t.Name + "_" + c.Name
+		}
+	}
+
 	q.Table = t
 	q.Values = values
 	return &q, nil
@@ -140,23 +149,11 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 		}
 	}
 
-	// analyze `where`
-
-	/*
-	for _, e := range n.Wheres{
-		eq, ok := e.(*Eq)
-		if !ok{
-		}
-
-		// left must be col-name.
-		colName := eq.left.(*Lit).v
-		for _, col := range cols{
-			if col.Name == colName{
-
-			}
+	for _, c := range cols{
+		if c.Name == schemes[0].PrimaryKey{
+			c.Primary = true
 		}
 	}
-	*/
 
 	var tables []*meta.Table
 	for _, s := range schemes{
@@ -177,25 +174,45 @@ func (a *Analyzer) analyzeUpdate(n *UpdateStmt) (*UpdateQuery, error) {
 	if !a.catalog.HasScheme(n.TableName){
 		return nil, fmt.Errorf("insert failed : `%s` doesn't exists", n.TableName)
 	}
+	scheme := a.catalog.FetchScheme(n.TableName)
+
 	t := &meta.Table{
 		Name:n.TableName,
 	}
 
 	// analyze `set`
-	// scheme := a.catalog.FetchScheme(n.TableName)
-	/*
-	var values []interface{}
-	for _, v := range n.Set{
-		return nil, fmt.Errorf("insert failed : unexpected types parsed")
+	var lits []string
+	for _, l := range n.Set{
+		num := l.(*Lit)
+		lits = append(lits, num.v)
 	}
-	*/
+
+	// FIXME
+	var sets []interface{}
+	for i, v := range lits{
+		if scheme.ColTypes[i] == meta.Int{
+			n, _ := strconv.Atoi(v)
+			sets = append(sets, n)
+		}else if scheme.ColTypes[i] == meta.Varchar{
+			sets = append(sets, v)
+		}else{
+			return nil, fmt.Errorf("update failed : unexpected types parsed")
+		}
+	}
+
+	// analyze `where`
 
 	q.Table = t
+	q.Set = sets
 	return &q, nil
 }
 
 func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, error){
 	var q CreateTableQuery
+
+	if n.PrimaryKey == ""{
+		return nil, errors.New("create table failed : primary key is needed")
+	}
 
 	if a.catalog.HasScheme(n.TableName){
 		return nil, fmt.Errorf("create table failed : table name `%s` already exists", n.TableName)
@@ -210,7 +227,7 @@ func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, er
 		}
 	}
 
-	q.Scheme = meta.NewScheme(n.TableName, n.ColNames, types)
+	q.Scheme = meta.NewScheme(n.TableName, n.ColNames, types, n.PrimaryKey)
 	return &q, nil
 }
 

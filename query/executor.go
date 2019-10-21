@@ -38,29 +38,47 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 
 		result = append(result, t)
 	}
-
 	return result
 }
 
+// IndexScan
 func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple{
 	var result []*storage.Tuple
-	store.ReadIndex(s.indexName)
+	// idx := s.tblName + s.indexCol
+	// btree, _ := store.ReadIndex(idx)
+	// items := btree.Get()
 	return result
+}
+
+func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr) []*storage.Tuple{
+	var filtered []*storage.Tuple
+	for _, w := range where{
+		left := w.(*Eq).left.(*Lit)
+		right := w.(*Eq).right.(*Lit)
+
+		for _, t := range tuples{
+			if t.GetStr(tableName, left.v) == right.v{
+				// filtered = append(filtered, t)
+			}
+		}
+	}
+
+	return filtered
 }
 
 func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) error{
-	// from
+	// from, where
 	tuples := p.scanners.Scan(e.storage)
+	filteredTuple := e.where(tuples, q.From[0].Name, q.Where)
 
-	// where
-
-
-	// q.Where
-	for _, t := range tuples{
+	// consider transactions.
+	for _, t := range filteredTuple{
 		if tran == nil || t.CanSee(tran){
 			fmt.Println(t)
 		}
 	}
+
+	// select
 
 	return nil
 }
@@ -74,6 +92,7 @@ func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
 
 	t := storage.NewTuple(tran.Txid(), w.Values)
 	e.storage.InsertTuple(w.Table.Name, t)
+	e.storage.InsertIndex(w.Index, t)
 
 	if !inTransaction{
 		e.commitTransaction(tran)
@@ -82,11 +101,21 @@ func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
 	return nil
 }
 
-func (e *Executor) updateTable(q *UpdateQuery) {
+func (e *Executor) updateTable(q *UpdateQuery, p *Plan, tran *storage.Transaction) error{
+	// set, where
+	// tuples := p.scanners.Scan(e.storage)
+	// filteredTuple := e.where(tuples, q.Where)
+
+	return nil
 }
 
 func (e *Executor) createTable(q *CreateTableQuery) error {
-	return e.catalog.Add(q.Scheme)
+	err := e.catalog.Add(q.Scheme)
+	if err != nil{
+		return err
+	}
+
+	return e.storage.CreateIndex(q.Scheme.TblName + "_" + q.Scheme.PrimaryKey)
 }
 
 func (e *Executor) beginTransaction() *storage.Transaction{
@@ -116,6 +145,8 @@ func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) erro
 		return e.createTable(concrete)
 	case *InsertQuery:
 		return e.insertTable(concrete, tran)
+	case *UpdateQuery:
+		return e.updateTable(concrete, p, tran)
 	case *SelectQuery:
 		return e.selectTable(concrete, p, tran)
 	}
