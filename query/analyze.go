@@ -104,9 +104,9 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 		}
 	}
 
-	for _, c := range t.Columns{
-		if c.Primary{
-			q.Index = t.Name + "_" + c.Name
+	for _, c := range scheme.ColNames{
+		if scheme.PrimaryKey == c{
+			q.Index = t.Name + "_" + c
 		}
 	}
 
@@ -120,7 +120,7 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 
 	// analyze `from`
 	var schemes []*meta.Scheme
-	for _, name := range n.From.TableNames{
+	for _, name := range n.From{
 		scheme := a.catalog.FetchScheme(name)
 		if scheme == nil{
 			return nil, fmt.Errorf("select failed :table `%s` doesn't exist", name)

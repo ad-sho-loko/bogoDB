@@ -77,12 +77,9 @@ func (p *Parser) eq() Expr{
 	return left
 }
 
-func (p *Parser) fromClause() *From{
+func (p *Parser) fromClause() []string{
 	s := p.expect(STRING)
-
-	return &From{
-		TableNames:[]string{s.str},
-	}
+	return []string{s.str}
 }
 
 func (p *Parser) whereClause() []Expr{

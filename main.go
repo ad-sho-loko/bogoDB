@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 func showTitle(){
@@ -24,7 +25,7 @@ func client(){
 		q := stdin.Text()
 
 		var err error
-		if q == "exit"{
+		if strings.HasPrefix(q, "exit"){
 			_, err = http.Get("http://localhost:32198/exit")
 		}else{
 			_, err = http.Get("http://localhost:32198/execute?query=" + q)

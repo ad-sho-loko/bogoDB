@@ -36,10 +36,10 @@ func (s *Storage) InsertTuple(tablename string, t *Tuple){
 	}
 }
 
-func (s *Storage) CreateIndex(indexName string) error{
+func (s *Storage) CreateIndex(indexName string) (*meta.BTree, error){
 	btree := meta.NewBTree()
 	s.buffer.btree[indexName] = btree
-	return nil
+	return btree, nil
 }
 
 func (s *Storage) InsertIndex(indexName string, item meta.Item) error{
@@ -60,8 +60,8 @@ func (s *Storage) ReadIndex(indexName string) (*meta.BTree, error){
 	}
 
 	btree, err := s.disk.readIndex(indexName)
-	if err != nil{
-		return nil, err
+	if err != nil || btree == nil{
+		return s.CreateIndex(indexName)
 	}
 
 	return btree, nil

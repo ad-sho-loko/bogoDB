@@ -20,7 +20,7 @@ type (
 
 	SelectStmt struct {
 		ColNames []string
-		From *From
+		From 	 []string
 		Wheres []Expr
 	}
 
@@ -48,15 +48,6 @@ func (s *UpdateStmt) stmtNode(){}
 func (s *BeginStmt) stmtNode(){}
 func (s *CommitStmt) stmtNode(){}
 func (s *AbortStmt) stmtNode(){}
-
-// clauses
-type From struct {
-	TableNames []string
-}
-
-type Where struct {
-	Cond []Expr
-}
 
 // expressions
 type Expr interface {

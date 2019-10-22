@@ -2,8 +2,10 @@ package query
 
 import (
 	"fmt"
+	"github.com/ad-sho-loko/bogodb/meta"
 	"github.com/ad-sho-loko/bogodb/storage"
 	"github.com/pkg/errors"
+	"strconv"
 )
 
 type Executor struct {
@@ -44,21 +46,35 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 // IndexScan
 func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple{
 	var result []*storage.Tuple
-	// idx := s.tblName + s.indexCol
-	// btree, _ := store.ReadIndex(idx)
-	// items := btree.Get()
+	btree, _ := store.ReadIndex(s.index)
+	item := btree.Get(meta.Bstring{Str:s.value})
+	if item != nil{
+		result = append(result, item.(*storage.Tuple))
+	}
 	return result
 }
 
 func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr) []*storage.Tuple{
+	// FIXME : eval actually
 	var filtered []*storage.Tuple
 	for _, w := range where{
 		left := w.(*Eq).left.(*Lit)
 		right := w.(*Eq).right.(*Lit)
-
 		for _, t := range tuples{
-			if t.GetStr(tableName, left.v) == right.v{
-				// filtered = append(filtered, t)
+
+			// FIXME : move to planner
+			s := e.catalog.FetchScheme(tableName)
+			order := 0
+			for _, c := range s.ColNames{
+				if c == left.v{
+					break
+				}
+				order++
+			}
+
+			n, _ := strconv.Atoi(right.v)
+			if t.Equal(order, right.v, n){
+				filtered = append(filtered, t)
 			}
 		}
 	}
@@ -67,12 +83,13 @@ func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr
 }
 
 func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) error{
-	// from, where
 	tuples := p.scanners.Scan(e.storage)
-	filteredTuple := e.where(tuples, q.From[0].Name, q.Where)
+	if q.Where != nil{
+		tuples = e.where(tuples, q.From[0].Name, q.Where)
+	}
 
 	// consider transactions.
-	for _, t := range filteredTuple{
+	for _, t := range tuples{
 		if tran == nil || t.CanSee(tran){
 			fmt.Println(t)
 		}
@@ -100,10 +117,6 @@ func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
 }
 
 func (e *Executor) updateTable(q *UpdateQuery, p *Plan, tran *storage.Transaction) error{
-	// set, where
-	// tuples := p.scanners.Scan(e.storage)
-	// filteredTuple := e.where(tuples, q.Where)
-
 	return nil
 }
 
@@ -113,7 +126,8 @@ func (e *Executor) createTable(q *CreateTableQuery) error {
 		return err
 	}
 
-	return e.storage.CreateIndex(q.Scheme.TblName + "_" + q.Scheme.PrimaryKey)
+	_, err = e.storage.CreateIndex(q.Scheme.TblName + "_" + q.Scheme.PrimaryKey)
+	return err
 }
 
 func (e *Executor) beginTransaction() *storage.Transaction{

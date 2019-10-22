@@ -7,14 +7,21 @@ type ConcurrentMap struct {
 	m map[interface{}]interface{}
 }
 
+func NewConcurrentMap() *ConcurrentMap{
+	return &ConcurrentMap{
+		m:make(map[interface{}]interface{}),
+	}
+}
+
 func (c *ConcurrentMap) Put(key, value interface{}){
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	c.m[key] = value
 }
 
-func (c *ConcurrentMap) Get(key interface{}) interface{}{
+func (c *ConcurrentMap) Get(key interface{}) (interface{}, bool){
 	c.mu.RLock()
 	defer c.mu.Unlock()
-	return c.m[key]
+	v, found := c.m[key]
+	return v, found
 }

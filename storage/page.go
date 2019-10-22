@@ -16,6 +16,7 @@ func NewPage() *Page{
 }
 
 func NewPgid(tableName string) uint64 {
+	// FIXME
 	return 0
 }
 

@@ -34,17 +34,8 @@ func NewTuple(minTxId uint64, values []interface{}) *Tuple{
 }
 
 func (m *Tuple) Less(than meta.Item) bool{
-	t, ok := than.(*Tuple)
-
-	if !ok{
-		return false
-	}
-
-	return m.GetPk() < t.GetPk()
-}
-
-func (m *Tuple) GetPk() int{
-	return 0
+	// just guarantee `Item`
+	return true
 }
 
 func SerializeTuple(t *Tuple) ([128]byte, error){
@@ -71,16 +62,16 @@ func DeserializeTuple(b [128]byte) (*Tuple, error){
 	return &t, nil
 }
 
-func (m *Tuple) GetInt(table *meta.Table, colName string) int{
-	for _, col := range table.Columns{
-		if colName == col.Name{
-		}
-	}
-	return 0
-}
+func (m *Tuple) Equal(order int, s string, n int) bool{
+	tupleData := m.Data[order]
 
-func (m *Tuple) GetStr(table string, col string) string{
-	return ""
+	if tupleData.Type == TupleData_STRING{
+		return tupleData.String_ == s
+	}else if tupleData.Type == TupleData_INT{
+		return tupleData.Number == int32(n)
+	}
+
+	return false
 }
 
 func (m *Tuple) IsUnused() bool{

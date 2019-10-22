@@ -25,8 +25,9 @@ type(
 	}
 
 	IndexScan struct {
-		tblName  string
-		indexCol string
+		tblName string
+		index   string
+		value   string
 	}
 )
 
@@ -37,31 +38,26 @@ func NewPlanner(q Query) *Planner{
 }
 
 func (p *Planner) planSelect(q *SelectQuery) (*Plan, error){
-	// use seqscan
-	return &Plan{
-		scanners:&SeqScan{
-			// FIXME
-			tblName:q.From[0].Name,
-		},
-	}, nil
-
-
 	// if where contains a primary key, use index scan.
 	for _, w := range q.Where{
 		eq, ok := w.(*Eq)
 		if !ok{
 			continue
 		}
+
 		col, ok := eq.left.(*Lit)
 		if !ok{
 			continue
 		}
+
 		for _, c := range q.Cols{
 			if col.v == c.Name && c.Primary{
 				return &Plan{
+					// FIXME
 					scanners:&IndexScan{
-						tblName:  q.From[0].Name,
-						indexCol: col.v,
+						tblName: q.From[0].Name,
+						index:   q.From[0].Name + "_" + col.v,
+						value:   eq.right.(*Lit).v,
 					},
 				}, nil
 			}
@@ -71,7 +67,6 @@ func (p *Planner) planSelect(q *SelectQuery) (*Plan, error){
 	// use seqscan
 	return &Plan{
 		scanners:&SeqScan{
-			// FIXME
 			tblName:q.From[0].Name,
 		},
 	}, nil
@@ -92,8 +87,8 @@ func (p *Planner) planUpdate(q *UpdateQuery) (*Plan, error){
 			if col.v == c.Name && c.Primary{
 				return &Plan{
 					scanners:&IndexScan{
-						tblName:  q.Table.Name,
-						indexCol: col.v,
+						tblName: q.Table.Name,
+						index:   col.v,
 					},
 				}, nil
 			}
