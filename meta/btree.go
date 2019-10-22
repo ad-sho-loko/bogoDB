@@ -1,19 +1,22 @@
 package meta
 
-import "sort"
+import (
+	"encoding/json"
+	"sort"
+)
 
 const(
 	maxDegree = 3
 )
 
 type BTree struct {
-	top *node
-	length int
+	Top    *node `json:"top"`
+	Length int   `json:"length"`
 }
 
 type node struct {
-	items items
-	children []*node
+	Items    items   `json:"items, []Item"`
+	Children []*node `json:"children"`
 }
 
 type items []Item
@@ -45,29 +48,29 @@ func (i *items) insertAt(index int, item Item){
 
 func NewBTree() *BTree{
 	return &BTree{
-		top:nil,
-		length:0,
+		Top:    nil,
+		Length: 0,
 	}
 }
 
 func (n *node) deleteChildAt(index int){
-	first := n.children[:index]
-	second := n.children[index+1:]
-	n.children = append(first, second...)
+	first := n.Children[:index]
+	second := n.Children[index+1:]
+	n.Children = append(first, second...)
 }
 
 func (n *node) splitChild(index int, item Item){
-	_, innerIndex := n.children[index].items.find(item)
-	n.children[index].items.insertAt(innerIndex, item)
+	_, innerIndex := n.Children[index].Items.find(item)
+	n.Children[index].Items.insertAt(innerIndex, item)
 
-	leftItem := n.children[index].items[maxDegree/2-1]
-	midItem := n.children[index].items[maxDegree/2]
-	rightItem := n.children[index].items[maxDegree/2+1]
+	leftItem := n.Children[index].Items[maxDegree/2-1]
+	midItem := n.Children[index].Items[maxDegree/2]
+	rightItem := n.Children[index].Items[maxDegree/2+1]
 
 	n.deleteChildAt(index)
 
-	_, midIndex := n.items.find(midItem)
-	n.items.insertAt(midIndex, midItem)
+	_, midIndex := n.Items.find(midItem)
+	n.Items.insertAt(midIndex, midItem)
 
 	left := new(node)
 	left.insert(leftItem)
@@ -75,128 +78,130 @@ func (n *node) splitChild(index int, item Item){
 	right := new(node)
 	right.insert(rightItem)
 
-	n.children = append(n.children, left)
-	n.children = append(n.children, right)
-	sort.Slice(n.children, func(i, j int) bool{
-		return n.children[i].items[0].Less(n.children[j].items[0])
+	n.Children = append(n.Children, left)
+	n.Children = append(n.Children, right)
+	sort.Slice(n.Children, func(i, j int) bool{
+		return n.Children[i].Items[0].Less(n.Children[j].Items[0])
 	})
 }
 
 func (n *node) splitMe(){
 	left := new(node)
-	left.items.insertAt(0, n.items[maxDegree/2-1])
+	left.Items.insertAt(0, n.Items[maxDegree/2-1])
 
 	right := new(node)
-	right.items.insertAt(0, n.items[maxDegree/2+1])
+	right.Items.insertAt(0, n.Items[maxDegree/2+1])
 
-	mid := n.items[maxDegree/2]
-	n.items = append([]Item{}, mid)
+	mid := n.Items[maxDegree/2]
+	n.Items = append([]Item{}, mid)
 
-	if len(n.children) == maxDegree + 1{
+	if len(n.Children) == maxDegree + 1{
 		var nodes []*node
 
-		left.children = append(left.children, n.children[0])
-		left.children = append(left.children, n.children[1])
+		left.Children = append(left.Children, n.Children[0])
+		left.Children = append(left.Children, n.Children[1])
 		nodes = append(nodes, left)
 
-		right.children = append(right.children, n.children[2])
-		right.children = append(right.children, n.children[3])
+		right.Children = append(right.Children, n.Children[2])
+		right.Children = append(right.Children, n.Children[3])
 		nodes = append(nodes, right)
-		n.children = nodes
+		n.Children = nodes
 	}else{
-		n.children = append(n.children, left)
-		n.children = append(n.children, right)
+		n.Children = append(n.Children, left)
+		n.Children = append(n.Children, right)
 	}
 }
 
 func (n *node) insert(item Item){
-	found, index := n.items.find(item)
+	found, index := n.Items.find(item)
 	if found{
 		return
 	}
 
-	if len(n.children) == 0{
-		n.items.insertAt(index, item)
+	if len(n.Children) == 0{
+		n.Items.insertAt(index, item)
 
-		if len(n.items) == maxDegree{
+		if len(n.Items) == maxDegree{
 			n.splitMe()
 		}
 
 		return
 	}
 
-	if len(n.children[index].items) == maxDegree - 1{
+	if len(n.Children[index].Items) == maxDegree - 1{
 		n.splitChild(index, item)
 
-		if len(n.items) == maxDegree{
+		if len(n.Items) == maxDegree{
 			n.splitMe()
 		}
 
 		return
 	}
 
-	n.children[index].insert(item)
+	n.Children[index].insert(item)
 }
 
 func (n *node) get(key Item) Item{
-	found, i := n.items.find(key)
+	found, i := n.Items.find(key)
 	if found {
-		return n.items[i]
-	} else if len(n.children) > 0 {
-		return n.children[i].get(key)
+		return n.Items[i]
+	} else if len(n.Children) > 0 {
+		return n.Children[i].get(key)
 	}
 	return nil
 }
 
 func (n *node) find(item Item) (bool, int){
-	found, index := n.items.find(item)
+	found, index := n.Items.find(item)
 	if found{
 		return found, index
 	}
 
-	if len(n.children) == 0{
+	if len(n.Children) == 0{
 		return false, -1
 	}
 
-	return n.children[index].find(item)
+	return n.Children[index].find(item)
 }
 
 func (b *BTree) Insert(item Item){
-	b.length++
+	b.Length++
 
-	if b.top == nil{
-		b.top = new(node)
-		b.top.items.insertAt(0, item)
+	if b.Top == nil{
+		b.Top = new(node)
+		b.Top.Items.insertAt(0, item)
 		return
 	}
 
-	b.top.insert(item)
+	b.Top.insert(item)
 }
 
 func (b *BTree) Find(item Item) (bool, int){
-	if b.top == nil{
+	if b.Top == nil{
 		return false, -1
 	}
 
-	return b.top.find(item)
+	return b.Top.find(item)
 }
 
 func (b *BTree) Get(key Item) Item {
-	if b.top == nil{
+	if b.Top == nil{
 		return nil
 	}
 
-	return b.top.get(key)
+	return b.Top.get(key)
 }
 
 func (b *BTree) Len() int{
-	return b.length
+	return b.Length
 }
 
 func SerializeBTree(tree *BTree) ([]byte, error){
-	return nil, nil
+	return json.Marshal(tree)
 }
 
 func DeserializeBTree(bytes []byte) (*BTree, error){
-	return nil, nil
+	var tree BTree
+	err := json.Unmarshal(bytes, &tree)
+	return &tree, err
 }

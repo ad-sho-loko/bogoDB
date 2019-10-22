@@ -43,6 +43,7 @@ type pageDescriptor struct {
 func newBufferPool() *bufferPool{
 	return &bufferPool{
 		lru: meta.NewLru(1000),
+		btree:make(map[string]*meta.BTree),
 	}
 }
 

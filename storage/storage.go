@@ -6,12 +6,14 @@ import "github.com/ad-sho-loko/bogodb/meta"
 type Storage struct {
 	buffer *bufferPool
 	disk *diskManager
+	home string
 }
 
-func NewStorage() *Storage{
+func NewStorage(home string) *Storage{
 	return &Storage{
 		buffer:newBufferPool(),
 		disk:newDiskManager(),
+		home:home,
 	}
 }
 
@@ -22,7 +24,7 @@ func (s *Storage) insertPage(tableName string){
 
 	if isNeedPersist {
 		// if a victim is dirty, its data must be persisted in the disk now.
-		if err := s.disk.persist(tableName, pgid, victim); err != nil{
+		if err := s.disk.persist(s.home, tableName, pgid, victim); err != nil{
 		}
 	}
 }
@@ -36,7 +38,8 @@ func (s *Storage) InsertTuple(tablename string, t *Tuple){
 
 func (s *Storage) CreateIndex(indexName string) error{
 	btree := meta.NewBTree()
-	return s.disk.writeIndex(indexName, btree)
+	s.buffer.btree[indexName] = btree
+	return nil
 }
 
 func (s *Storage) InsertIndex(indexName string, item meta.Item) error{
@@ -87,7 +90,7 @@ func (s *Storage) readPage(tableName string, pgid uint64) (*Page, error){
 		return pg, nil
 	}
 
-	pg, err = s.disk.fetchPage(tableName, pgid)
+	pg, err = s.disk.fetchPage(s.home, tableName, pgid)
 
 	if err != nil{
 		return nil, err
@@ -102,7 +105,7 @@ func (s *Storage) Terminate() error{
 	for _, item := range items{
 		pd := item.(*pageDescriptor)
 		if pd.dirty{
-			err := s.disk.persist(pd.tableName, pd.pgid, pd.page)
+			err := s.disk.persist(s.home, pd.tableName, pd.pgid, pd.page)
 			if err != nil{
 				return err
 			}
@@ -110,7 +113,7 @@ func (s *Storage) Terminate() error{
 	}
 
 	for key, val := range s.buffer.btree{
-		err := s.disk.writeIndex(key, val)
+		err := s.disk.writeIndex(s.home, key, val)
 		if err != nil{
 			return err
 		}

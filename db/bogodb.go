@@ -14,6 +14,7 @@ type BogoDb struct {
 	storage *storage.Storage
 	catalog *storage.Catalog
 	tranManager *storage.TransactionManager
+	home string
 }
 
 type dbSession struct {
@@ -22,23 +23,30 @@ type dbSession struct {
 
 func NewBogoDb() (*BogoDb, error){
 	// load the catalog if exists
-	path, ok := os.LookupEnv("BOGO_HOME")
+	home, ok := os.LookupEnv("BOGO_HOME")
 	if !ok{
-		// for test codes
-		path = "."
+		// default
+		home = ".bogo/"
+		if _, err := os.Stat(home); os.IsNotExist(err){
+			err := os.Mkdir(home,0777)
+			if err != nil{
+				panic(err)
+			}
+		}
 	}
 
-	catalog, err := storage.LoadCatalog(path)
+	catalog, err := storage.LoadCatalog(home)
 	if err != nil{
 		return nil, err
 	}
 
 	return &BogoDb{
 		catalog:catalog,
-		storage:storage.NewStorage(),
+		storage:storage.NewStorage(home),
 		tranManager:storage.NewTransactionManager(),
 		contexts:make(map[string]*dbSession),
 		exit:make(chan int, 1),
+		home:home,
 	}, nil
 }
 
@@ -94,14 +102,21 @@ func (db *BogoDb) Execute(q string, userAgent string) error{
 }
 
 func (db *BogoDb) Terminate(){
-	err := storage.SaveCatalog("./", db.catalog)
+	if _, err := os.Stat(db.home); os.IsNotExist(err){
+		err := os.Mkdir(db.home,0777)
+		if err != nil{
+			panic(err)
+		}
+	}
+
+	err := storage.SaveCatalog(db.home, db.catalog)
 	if err == nil{
-		log.Printf("catalog.db has completely saved in %s\n", "./")
+		log.Printf("catalog.db has completely saved in %s\n", db.home)
 	}
 
 	err = db.storage.Terminate()
 	if err == nil{
-		log.Printf("page has completely saved in %s\n", "./")
+		log.Printf("data has completely saved in %s\n", db.home)
 	}
 
 	os.Exit(0)

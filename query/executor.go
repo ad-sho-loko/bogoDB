@@ -78,8 +78,6 @@ func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transactio
 		}
 	}
 
-	// select
-
 	return nil
 }
 

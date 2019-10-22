@@ -5,6 +5,7 @@ import (
 	"github.com/ad-sho-loko/bogodb/meta"
 	"io/ioutil"
 	"path"
+	"path/filepath"
 	"sync"
 )
 
@@ -39,13 +40,13 @@ func LoadCatalog(catalogPath string) (*Catalog, error){
 
 // SaveCatalog persists the system catalog as `catalog.db`.
 // `catalog.db` has a simple json format like key/value.
-func SaveCatalog(savePath string, c *Catalog) (err error){
+func SaveCatalog(dirPath string, c *Catalog) (err error){
 	jsonStr, err := json.Marshal(c)
 	if err != nil{
 		return
 	}
 
- 	err = ioutil.WriteFile(path.Join(savePath, catalogName), jsonStr, 0644)
+ 	err = ioutil.WriteFile(filepath.Join(dirPath, catalogName), jsonStr, 0644)
 	return
 }
 

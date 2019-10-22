@@ -47,9 +47,9 @@ func TestSplitParent(t *testing.T){
 	assert.True(t, found)
 
 	// test balance
-	assert.Equal(t, btree.top.items[0], Int64(2))
-	assert.Equal(t, btree.top.children[0].items[0], Int64(1))
-	assert.Equal(t, btree.top.children[1].items[0], Int64(3))
+	assert.Equal(t, btree.Top.Items[0], Int64(2))
+	assert.Equal(t, btree.Top.Children[0].Items[0], Int64(1))
+	assert.Equal(t, btree.Top.Children[1].Items[0], Int64(3))
 }
 
 func TestSplitChild(t *testing.T){
@@ -76,11 +76,11 @@ func TestSplitChild(t *testing.T){
 	assert.True(t, found)
 
 	// test balance
-	assert.Equal(t, btree.top.items[0], Int64(2))
-	assert.Equal(t, btree.top.items[1], Int64(4))
-	assert.Equal(t, btree.top.children[0].items[0], Int64(1))
-	assert.Equal(t, btree.top.children[1].items[0], Int64(3))
-	assert.Equal(t, btree.top.children[2].items[0], Int64(5))
+	assert.Equal(t, btree.Top.Items[0], Int64(2))
+	assert.Equal(t, btree.Top.Items[1], Int64(4))
+	assert.Equal(t, btree.Top.Children[0].Items[0], Int64(1))
+	assert.Equal(t, btree.Top.Children[1].Items[0], Int64(3))
+	assert.Equal(t, btree.Top.Children[2].Items[0], Int64(5))
 }
 
 func TestBlanced(t *testing.T){
@@ -115,13 +115,13 @@ func TestBlanced(t *testing.T){
 	assert.True(t, found)
 
 	// test balance
-	assert.Equal(t, btree.top.items[0], Int64(4))
-	assert.Equal(t, btree.top.children[0].items[0], Int64(2))
-	assert.Equal(t, btree.top.children[1].items[0], Int64(6))
-	assert.Equal(t, btree.top.children[0].children[0].items[0], Int64(1))
-	assert.Equal(t, btree.top.children[0].children[1].items[0], Int64(3))
-	assert.Equal(t, btree.top.children[1].children[0].items[0], Int64(5))
-	assert.Equal(t, btree.top.children[1].children[1].items[0], Int64(7))
+	assert.Equal(t, btree.Top.Items[0], Int64(4))
+	assert.Equal(t, btree.Top.Children[0].Items[0], Int64(2))
+	assert.Equal(t, btree.Top.Children[1].Items[0], Int64(6))
+	assert.Equal(t, btree.Top.Children[0].Children[0].Items[0], Int64(1))
+	assert.Equal(t, btree.Top.Children[0].Children[1].Items[0], Int64(3))
+	assert.Equal(t, btree.Top.Children[1].Children[0].Items[0], Int64(5))
+	assert.Equal(t, btree.Top.Children[1].Children[1].Items[0], Int64(7))
 }
 
 func TestBlancedReversed(t *testing.T){
@@ -156,13 +156,13 @@ func TestBlancedReversed(t *testing.T){
 	assert.True(t, found)
 
 	// test balance
-	assert.Equal(t, btree.top.items[0], Int64(4))
-	assert.Equal(t, btree.top.children[0].items[0], Int64(2))
-	assert.Equal(t, btree.top.children[1].items[0], Int64(6))
-	assert.Equal(t, btree.top.children[0].children[0].items[0], Int64(1))
-	assert.Equal(t, btree.top.children[0].children[1].items[0], Int64(3))
-	assert.Equal(t, btree.top.children[1].children[0].items[0], Int64(5))
-	assert.Equal(t, btree.top.children[1].children[1].items[0], Int64(7))
+	assert.Equal(t, btree.Top.Items[0], Int64(4))
+	assert.Equal(t, btree.Top.Children[0].Items[0], Int64(2))
+	assert.Equal(t, btree.Top.Children[1].Items[0], Int64(6))
+	assert.Equal(t, btree.Top.Children[0].Children[0].Items[0], Int64(1))
+	assert.Equal(t, btree.Top.Children[0].Children[1].Items[0], Int64(3))
+	assert.Equal(t, btree.Top.Children[1].Children[0].Items[0], Int64(5))
+	assert.Equal(t, btree.Top.Children[1].Children[1].Items[0], Int64(7))
 }
 
 func TestGet(t *testing.T){
@@ -200,4 +200,3 @@ func TestEmpty(t *testing.T){
 	found, _ := btree.Find(Int64(1))
 	assert.False(t, found)
 }
-
