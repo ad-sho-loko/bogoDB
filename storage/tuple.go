@@ -88,5 +88,9 @@ func (m *Tuple) CanSee(tran *Transaction) bool{
 		return false
 	}
 
+	if m.MinTxId > tran.Txid() && tran.state != Commited{
+		return false
+	}
+
 	return true
 }

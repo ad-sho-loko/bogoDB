@@ -6,6 +6,7 @@ import (
 	"github.com/ad-sho-loko/bogodb/storage"
 	"github.com/pkg/errors"
 	"strconv"
+	"strings"
 )
 
 type Executor struct {
@@ -82,20 +83,24 @@ func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr
 	return filtered
 }
 
-func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) error{
+func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) (string, error){
 	tuples := p.scanners.Scan(e.storage)
 	if q.Where != nil{
 		tuples = e.where(tuples, q.From[0].Name, q.Where)
 	}
 
 	// consider transactions.
+	var sb strings.Builder
 	for _, t := range tuples{
 		if tran == nil || t.CanSee(tran){
-			fmt.Println(t)
+			for i, c := range q.Cols{
+				s := fmt.Sprintf(c.Name, t.Data[i].String())
+				sb.WriteString(s)
+			}
 		}
 	}
 
-	return nil
+	return sb.String(), nil
 }
 
 func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
@@ -142,26 +147,26 @@ func (e *Executor) abortTransaction(tran *storage.Transaction){
 	e.tranManager.Abort(tran)
 }
 
-func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) error{
+func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (string, error){
 	switch concrete := q.(type) {
 	case *BeginQuery:
 		e.beginTransaction()
-		return nil
+		return "transaction started", nil
 	case *CommitQuery:
 		e.commitTransaction(tran)
-		return nil
+		return "transaction commited", nil
 	case *AbortQuery:
 		e.abortTransaction(tran)
-		return nil
+		return "transaction aborted", nil
 	case *CreateTableQuery:
-		return e.createTable(concrete)
+		return "A table created", e.createTable(concrete)
 	case *InsertQuery:
-		return e.insertTable(concrete, tran)
+		return "A row inserterd", e.insertTable(concrete, tran)
 	case *UpdateQuery:
-		return e.updateTable(concrete, p, tran)
+		return "", e.updateTable(concrete, p, tran)
 	case *SelectQuery:
 		return e.selectTable(concrete, p, tran)
 	}
 
-	return errors.New("failed to execute query")
+	return "", errors.New("failed to execute query")
 }

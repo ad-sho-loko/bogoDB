@@ -43,11 +43,6 @@ func server(){
 		log.Fatal(err)
 	}
 	bdb.Init()
-
-	err = os.Setenv("BOGO_HOME", "/tmp/bogodb/"); if err != nil{
-		log.Fatal(err)
-	}
-
 	db.NewApiServer(bdb).Host()
 }
 

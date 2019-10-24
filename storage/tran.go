@@ -5,7 +5,7 @@ import (
 )
 
 type TransactionManager struct {
-	clogs map[uint64]*Transaction
+	clogs map[uint64]*Transaction // should be thread-safe
 	currentTxid uint64 // it may overflow someday.
 }
 

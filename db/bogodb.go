@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"github.com/ad-sho-loko/bogodb/query"
 	"github.com/ad-sho-loko/bogodb/storage"
 	"log"
@@ -97,7 +98,8 @@ func (db *BogoDb) Execute(q string, userAgent string) error{
 	plan, _ := planner.PlanMain()
 
 	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
-	err = executor.ExecuteMain(analyzedQuery, plan, trn)
+	str, err := executor.ExecuteMain(analyzedQuery, plan, trn)
+	fmt.Println(str)
 	return err
 }
 

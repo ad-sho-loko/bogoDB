@@ -17,8 +17,7 @@ Inspired by CMU Database Group's Lecture (of course not homework!) This db still
 
 ## Requirement
 
-- go
-- maybe unix 
+- go 1.13
 - protoc
 
 ## How to run
@@ -28,13 +27,13 @@ Inspired by CMU Database Group's Lecture (of course not homework!) This db still
 > go run .
 
 # create table
-> curl `create table users { id int primary key }
+> curl "http://localhost:32198/execute?query=create%20table%20users%20{%20id%20int%20primary%20key%20%20}"
 
 # insert 
-> curl `insert into users values (1)`
+> curl "http://localhost:32198/execute?query=insert%20into%20users%20values%20(1)"
 
 # select
-> curl `select id from users`
+> curl "http://localhost:32198/execute?query=select%20id%20from%20users"
 ```
 
 ## TODO 

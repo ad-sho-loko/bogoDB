@@ -65,7 +65,7 @@ func TestParseSelect(t *testing.T){
 	}
 
 	n := node.(*SelectStmt)
-	assert.Equal(t, "users", n.From.TableNames[0])
+	assert.Equal(t, "users", n.From[0])
 	assert.Equal(t, "id", n.ColNames[0])
 }
 
