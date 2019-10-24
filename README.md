@@ -1,7 +1,7 @@
 # BogoDb
 
 BogoDb is a toy database management system written in Go.
-Inspired by CMU Database Group's Lecture (of course not homework!) This db still works completely poor. I realized it is so difficult to develop efficient database...
+Inspired by CMU Database Group's Lecture (of course not including homework!) This db still works completely poor. I realized it is so difficult to develop efficient database...
 
 ## Specification 
 

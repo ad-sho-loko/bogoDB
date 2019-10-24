@@ -62,15 +62,3 @@ func (c ColType) String() string{
 
 	return "undefined"
 }
-
-type Bstring struct{
-	Str string
-}
-
-func (b Bstring) Less(than Item) bool{
-	s, ok := than.(*Bstring)
-	if !ok{
-		return false
-	}
-	return b == *s
-}

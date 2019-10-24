@@ -2,6 +2,7 @@ package meta
 
 import (
 	"github.com/stretchr/testify/assert"
+	"log"
 	"math/rand"
 	"testing"
 )
@@ -199,4 +200,21 @@ func TestEmpty(t *testing.T){
 	btree := NewBTree()
 	found, _ := btree.Find(Int64(1))
 	assert.False(t, found)
+}
+
+func TestSerialize(t *testing.T){
+	btree := NewBTree()
+	btree.Insert(IntItem(1))
+	b, err := SerializeBTree(btree)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	newTree, err := DeserializeBTree(b)
+	if err != nil{
+		log.Fatal(err)
+	}
+
+	item := newTree.Top.Items[0].(IntItem)
+	assert.Equal(t, item, IntItem(1))
 }

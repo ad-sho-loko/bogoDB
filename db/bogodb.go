@@ -113,12 +113,12 @@ func (db *BogoDb) Terminate(){
 
 	err := storage.SaveCatalog(db.home, db.catalog)
 	if err == nil{
-		log.Printf("catalog.db has completely saved in %s\n", db.home)
+		log.Printf("`catalog.db` has completely saved in %s\n", db.home)
 	}
 
 	err = db.storage.Terminate()
 	if err == nil{
-		log.Printf("data has completely saved in %s\n", db.home)
+		log.Printf("data files have completely saved in %s\n", db.home)
 	}
 
 	os.Exit(0)

@@ -15,15 +15,24 @@ type BTree struct {
 }
 
 type node struct {
-	Items    items   `json:"items, []Item"`
+	Items    items   `json:"items"`
 	Children []*node `json:"children"`
 }
 
 type items []Item
+type IntItem int32
 
 // Item must be comarable for b-tree implementation.
 type Item interface {
 	Less(than Item) bool
+}
+
+func (i IntItem) Less(than Item) bool{
+	v, ok := than.(IntItem)
+	if !ok{
+		return false
+	}
+	return i < v
 }
 
 func (i *items) find(item Item) (bool, int){
@@ -204,4 +213,23 @@ func DeserializeBTree(bytes []byte) (*BTree, error){
 	var tree BTree
 	err := json.Unmarshal(bytes, &tree)
 	return &tree, err
+}
+
+func (i items) MarshalJSON()([]byte, error){
+	var intItems []IntItem
+	for _, item := range i{
+		intItems = append(intItems, item.(IntItem))
+	}
+	return json.Marshal(intItems)
+}
+
+func (i *items) UnmarshalJSON(b []byte) error {
+	var intItems []IntItem
+	err := json.Unmarshal([]byte(b), &intItems)
+
+	for index, item := range intItems{
+		i.insertAt(index, item)
+	}
+
+	return err
 }

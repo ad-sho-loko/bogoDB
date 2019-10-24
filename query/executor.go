@@ -48,7 +48,10 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple{
 	var result []*storage.Tuple
 	btree, _ := store.ReadIndex(s.index)
-	item := btree.Get(meta.Bstring{Str:s.value})
+
+	i, _ := strconv.Atoi(s.value)
+	item := btree.Get(meta.IntItem(i))
+
 	if item != nil{
 		result = append(result, item.(*storage.Tuple))
 	}
@@ -151,17 +154,17 @@ func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (str
 	switch concrete := q.(type) {
 	case *BeginQuery:
 		e.beginTransaction()
-		return "transaction started", nil
+		return "", nil
 	case *CommitQuery:
 		e.commitTransaction(tran)
-		return "transaction commited", nil
+		return "", nil
 	case *AbortQuery:
 		e.abortTransaction(tran)
-		return "transaction aborted", nil
+		return "", nil
 	case *CreateTableQuery:
-		return "A table created", e.createTable(concrete)
+		return "", e.createTable(concrete)
 	case *InsertQuery:
-		return "A row inserterd", e.insertTable(concrete, tran)
+		return "", e.insertTable(concrete, tran)
 	case *UpdateQuery:
 		return "", e.updateTable(concrete, p, tran)
 	case *SelectQuery:
