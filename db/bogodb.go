@@ -1,12 +1,13 @@
 package db
 
 import (
-	"fmt"
+	"github.com/ad-sho-loko/bogodb/meta"
 	"github.com/ad-sho-loko/bogodb/query"
 	"github.com/ad-sho-loko/bogodb/storage"
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 )
 
 type BogoDb struct {
@@ -67,7 +68,7 @@ func (db *BogoDb) Init() {
 	}()
 }
 
-func (db *BogoDb) Execute(q string, userAgent string) error {
+func (db *BogoDb) Execute(q string, userAgent string) (string, error) {
 	var trn *storage.Transaction
 
 	ctx, found := db.contexts[userAgent]
@@ -78,29 +79,48 @@ func (db *BogoDb) Execute(q string, userAgent string) error {
 	tokenizer := query.NewTokenizer(q)
 	tokens, err := tokenizer.Tokenize()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	parser := query.NewParser(tokens)
 	node, errs := parser.Parse()
 	if len(errs) != 0 {
 		// show first error message anyway...
-		return errs[0]
+		return "", errs[0]
 	}
 
 	analyzer := query.NewAnalyzer(db.catalog)
 	analyzedQuery, err := analyzer.AnalyzeMain(node)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	planner := query.NewPlanner(analyzedQuery)
 	plan, _ := planner.PlanMain()
 
 	executor := query.NewExecutor(db.storage, db.catalog, db.tranManager)
-	str, err := executor.ExecuteMain(analyzedQuery, plan, trn)
-	fmt.Println(str)
-	return err
+	result, err := executor.ExecuteMain(analyzedQuery, plan, trn)
+
+	return db.stringfyResultSet(result), err
+}
+
+func (db *BogoDb) stringfyResultSet(r *meta.ResultSet) string{
+	var sb strings.Builder
+
+	sb.WriteString(r.Message)
+	for _, c := range r.ColNames{
+		sb.WriteString(c)
+	}
+	sb.WriteString("\n")
+
+	for i, s := range r.Values{
+		sb.WriteString(s)
+		if i % len(r.ColNames) == 0{
+			sb.WriteString("\n")
+		}
+	}
+
+	return sb.String()
 }
 
 func (db *BogoDb) Terminate() {

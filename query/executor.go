@@ -6,7 +6,6 @@ import (
 	"github.com/ad-sho-loko/bogodb/storage"
 	"github.com/pkg/errors"
 	"strconv"
-	"strings"
 )
 
 type Executor struct {
@@ -86,27 +85,39 @@ func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr
 	return filtered
 }
 
-func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) (string, error) {
+func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) (*meta.ResultSet, error) {
 	tuples := p.scanners.Scan(e.storage)
 	if q.Where != nil {
 		tuples = e.where(tuples, q.From[0].Name, q.Where)
 	}
 
 	// consider transactions.
-	var sb strings.Builder
+	var values []string
 	for _, t := range tuples {
 		if tran == nil || t.CanSee(tran) {
 			for i, c := range q.Cols {
 				s := fmt.Sprintf(c.Name, t.Data[i].String())
-				sb.WriteString(s)
+				values = append(values, s)
 			}
 		}
 	}
 
-	return sb.String(), nil
+
+	var colNames []string
+	for _, c := range q.Cols{
+		colNames = append(colNames, c.Name)
+	}
+
+	rs := &meta.ResultSet{
+		Message:"",
+		ColNames:colNames,
+		Values:values,
+	}
+
+	return rs, nil
 }
 
-func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error {
+func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) (*meta.ResultSet, error) {
 	inTransaction := tran != nil
 
 	if !inTransaction {
@@ -121,21 +132,21 @@ func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error 
 		e.commitTransaction(tran)
 	}
 
-	return nil
+	return meta.NewWithMessage("A row was inserted"), nil
 }
 
 func (e *Executor) updateTable(q *UpdateQuery, p *Plan, tran *storage.Transaction) error {
 	return nil
 }
 
-func (e *Executor) createTable(q *CreateTableQuery) error {
+func (e *Executor) createTable(q *CreateTableQuery) (*meta.ResultSet, error){
 	err := e.catalog.Add(q.Scheme)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	_, err = e.storage.CreateIndex(q.Scheme.TblName + "_" + q.Scheme.PrimaryKey)
-	return err
+	return meta.NewWithMessage(q.Scheme.TblName + " was created as Table"), nil
 }
 
 func (e *Executor) beginTransaction() *storage.Transaction {
@@ -150,26 +161,26 @@ func (e *Executor) abortTransaction(tran *storage.Transaction) {
 	e.tranManager.Abort(tran)
 }
 
-func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (string, error) {
+func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (*meta.ResultSet, error) {
 	switch concrete := q.(type) {
 	case *BeginQuery:
 		e.beginTransaction()
-		return "", nil
+		return meta.NewWithMessage("Transaction begins."), nil
 	case *CommitQuery:
 		e.commitTransaction(tran)
-		return "", nil
+		return meta.NewWithMessage("Transaction was commited."), nil
 	case *AbortQuery:
 		e.abortTransaction(tran)
-		return "", nil
+		return meta.NewWithMessage("Transaction was aborted."), nil
 	case *CreateTableQuery:
-		return "", e.createTable(concrete)
+		return e.createTable(concrete)
 	case *InsertQuery:
-		return "", e.insertTable(concrete, tran)
-	case *UpdateQuery:
-		return "", e.updateTable(concrete, p, tran)
+		return e.insertTable(concrete, tran)
+	// case *UpdateQuery:
+	//	return e.updateTable(concrete, p, tran)
 	case *SelectQuery:
 		return e.selectTable(concrete, p, tran)
 	}
 
-	return "", errors.New("failed to execute query")
+	return nil, errors.New("failed to execute query")
 }

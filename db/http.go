@@ -25,12 +25,15 @@ func (a *ApiServer) executeHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := a.db.Execute(q[0], r.UserAgent())
+	res, err := a.db.Execute(q[0], r.UserAgent())
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(err.Error()))
 		log.Println(err)
 		return
 	}
+
+	w.Write([]byte(res))
 }
 
 func (a *ApiServer) exitHandler(w http.ResponseWriter, r *http.Request) {

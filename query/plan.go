@@ -5,7 +5,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Planner is to plan
+// Planner is to plan inputting queries.
 type Planner struct {
 	q Query
 }

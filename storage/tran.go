@@ -45,14 +45,14 @@ func (t *TransactionManager) BeginTransaction() *Transaction {
 	return tx
 }
 
-func (t *Transaction) Txid() uint64 {
-	return t.txid
-}
-
 func (t *TransactionManager) Commit(tran *Transaction) {
 	tran.state = Commited
 }
 
 func (t *TransactionManager) Abort(tran *Transaction) {
 	tran.state = Abort
+}
+
+func (t *Transaction) Txid() uint64 {
+	return t.txid
 }

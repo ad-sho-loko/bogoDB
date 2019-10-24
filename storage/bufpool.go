@@ -8,7 +8,7 @@ import (
 
 type bufferPool struct {
 	lru   *meta.Lru
-	btree map[string]*meta.BTree
+	btree map[string]*meta.BTree // should be thread-safe
 }
 
 type bufferTag struct {
@@ -47,7 +47,7 @@ func newBufferPool() *bufferPool {
 	}
 }
 
-func (b *bufferPool) toPid(tid uint64) uint64 {
+func (b *bufferPool) toPgid(tid uint64) uint64 {
 	return tid / TupleNumber
 }
 
@@ -60,7 +60,7 @@ func (b *bufferPool) unpinPage(pg *pageDescriptor) {
 }
 
 func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error) {
-	pgid := b.toPid(tid)
+	pgid := b.toPgid(tid)
 	bt := newBufferTag(tableName, pgid)
 
 	hash := bt.hash()
@@ -76,7 +76,8 @@ func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error) {
 func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool {
 	// TODO
 	// latestTid := 0
-	// pgid := b.toPid(latestTid)
+	// pgid := b.toPgid(latestTid)
+
 	bt := newBufferTag(tableName, NewPgid(tableName))
 
 	hash := bt.hash()

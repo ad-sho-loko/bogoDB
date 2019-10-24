@@ -33,9 +33,17 @@ func NewTuple(minTxId uint64, values []interface{}) *Tuple {
 	return &t
 }
 
-// For guarantee `Item`
 func (m *Tuple) Less(than meta.Item) bool {
-	return true
+	t, ok := than.(*Tuple)
+	if !ok{
+		return false
+	}
+
+	// FIXME
+	left := m.Data[0].Number
+	right := t.Data[0].Number
+
+	return left < right
 }
 
 func SerializeTuple(t *Tuple) ([128]byte, error) {
@@ -56,7 +64,7 @@ func DeserializeTuple(b [128]byte) (*Tuple, error) {
 
 	err := proto.Unmarshal(b[:], &t)
 	if err != nil {
-		// return nil, err
+		return nil, err
 	}
 
 	return &t, nil

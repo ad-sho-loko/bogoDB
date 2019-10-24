@@ -199,8 +199,6 @@ func (a *Analyzer) analyzeUpdate(n *UpdateStmt) (*UpdateQuery, error) {
 		}
 	}
 
-	// analyze `where`
-
 	q.Table = t
 	q.Set = sets
 	return &q, nil

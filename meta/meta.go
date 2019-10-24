@@ -62,3 +62,15 @@ func (c ColType) String() string {
 
 	return "undefined"
 }
+
+type ResultSet struct {
+	Message string
+	ColNames []string
+	Values []string
+}
+
+func NewWithMessage(message string) *ResultSet{
+	return &ResultSet{
+		Message:message,
+	}
+}

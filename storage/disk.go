@@ -21,13 +21,6 @@ func (d *diskManager) toPid(tid uint64) uint64 {
 	return tid / TupleNumber
 }
 
-/*
-func (d *diskManager) fetchPageByTid(tableName string, tid uint64) (*Page, error){
-	pid := d.toPid(tid)
-	return d.fetchPage(tableName, pid)
-}
-*/
-
 func (d *diskManager) fetchPage(dirPath, tableName string, pgid uint64) (*Page, error) {
 	fileName := strconv.FormatUint(pgid, 10)
 	pagePath := path.Join(dirPath, tableName, fileName)
