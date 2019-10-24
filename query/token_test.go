@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func TestCreateTableTokenize(t *testing.T){
+func TestCreateTableTokenize(t *testing.T) {
 	tokenizer := NewTokenizer("create table{int}")
 	tkns, err := tokenizer.Tokenize()
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -22,11 +22,11 @@ func TestCreateTableTokenize(t *testing.T){
 	assert.Equal(t, tkns[4].kind, RBRACE)
 }
 
-func TestLitTokenize(t *testing.T){
+func TestLitTokenize(t *testing.T) {
 	tokenizer := NewTokenizer("a def 1 123")
 	tkns, err := tokenizer.Tokenize()
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -41,11 +41,11 @@ func TestLitTokenize(t *testing.T){
 	assert.Equal(t, tkns[3].str, "123")
 }
 
-func TestOperatorTokenize(t *testing.T){
+func TestOperatorTokenize(t *testing.T) {
 	tokenizer := NewTokenizer("{},*=()")
 	tkns, err := tokenizer.Tokenize()
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -59,11 +59,11 @@ func TestOperatorTokenize(t *testing.T){
 	assert.Equal(t, tkns[6].kind, RPAREN)
 }
 
-func TestKeywordTokenize(t *testing.T){
+func TestKeywordTokenize(t *testing.T) {
 	tokenizer := NewTokenizer("create table select where from insert into values update set begin commit rollback")
 	tkns, err := tokenizer.Tokenize()
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -83,11 +83,11 @@ func TestKeywordTokenize(t *testing.T){
 	assert.Equal(t, tkns[12].kind, ROLLBACK)
 }
 
-func TestUpperKeywordTokenize(t *testing.T){
+func TestUpperKeywordTokenize(t *testing.T) {
 	tokenizer := NewTokenizer("CREATE TABLE")
 	tkns, err := tokenizer.Tokenize()
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -95,4 +95,3 @@ func TestUpperKeywordTokenize(t *testing.T){
 	assert.Equal(t, tkns[0].kind, CREATE)
 	assert.Equal(t, tkns[1].kind, TABLE)
 }
-

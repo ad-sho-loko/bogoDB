@@ -31,16 +31,16 @@ type CreateTableQuery struct {
 }
 
 type UpdateQuery struct {
-	Table  *meta.Table
-	Cols []*meta.Column
-	Set []interface{}
+	Table *meta.Table
+	Cols  []*meta.Column
+	Set   []interface{}
 	Where []Expr
 }
 
 type InsertQuery struct {
 	Table  *meta.Table
 	Values []interface{}
-	Index string
+	Index  string
 }
 
 type BeginQuery struct {
@@ -52,60 +52,59 @@ type CommitQuery struct {
 type AbortQuery struct {
 }
 
-func (q *SelectQuery) evalQuery(){}
-func (q *InsertQuery) evalQuery(){}
-func (q *CreateTableQuery) evalQuery(){}
-func (q *UpdateQuery) evalQuery(){}
-func (q *BeginQuery) evalQuery(){}
-func (q *CommitQuery) evalQuery(){}
-func (q *AbortQuery) evalQuery(){}
+func (q *SelectQuery) evalQuery()      {}
+func (q *InsertQuery) evalQuery()      {}
+func (q *CreateTableQuery) evalQuery() {}
+func (q *UpdateQuery) evalQuery()      {}
+func (q *BeginQuery) evalQuery()       {}
+func (q *CommitQuery) evalQuery()      {}
+func (q *AbortQuery) evalQuery()       {}
 
-
-func NewAnalyzer(catalog *storage.Catalog) *Analyzer{
+func NewAnalyzer(catalog *storage.Catalog) *Analyzer {
 	return &Analyzer{
-		catalog:catalog,
+		catalog: catalog,
 	}
 }
 
-func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
+func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error) {
 	var q InsertQuery
 
 	// analyze `into`
-	if !a.catalog.HasScheme(n.TableName){
+	if !a.catalog.HasScheme(n.TableName) {
 		return nil, fmt.Errorf("insert failed : `%s` doesn't exists", n.TableName)
 	}
 	scheme := a.catalog.FetchScheme(n.TableName)
 
 	t := &meta.Table{
-		Name:n.TableName,
+		Name: n.TableName,
 	}
 
 	// analyze `values`
-	if len(n.Values) != len(scheme.ColNames){
+	if len(n.Values) != len(scheme.ColNames) {
 		return nil, fmt.Errorf("insert failed : `values` should be same length")
 	}
 
 	var lits []string
-	for _, l := range n.Values{
+	for _, l := range n.Values {
 		num := l.(*Lit)
 		lits = append(lits, num.v)
 	}
 
 	// FIXME
- 	var values []interface{}
-	for i, v := range lits{
-		if scheme.ColTypes[i] == meta.Int{
+	var values []interface{}
+	for i, v := range lits {
+		if scheme.ColTypes[i] == meta.Int {
 			n, _ := strconv.Atoi(v)
 			values = append(values, n)
-		}else if scheme.ColTypes[i] == meta.Varchar{
+		} else if scheme.ColTypes[i] == meta.Varchar {
 			values = append(values, v)
-		}else{
+		} else {
 			return nil, fmt.Errorf("insert failed : unexpected types parsed")
 		}
 	}
 
-	for _, c := range scheme.ColNames{
-		if scheme.PrimaryKey == c{
+	for _, c := range scheme.ColNames {
+		if scheme.PrimaryKey == c {
 			q.Index = t.Name + "_" + c
 		}
 	}
@@ -115,14 +114,14 @@ func (a *Analyzer) analyzeInsert(n *InsertStmt) (*InsertQuery, error){
 	return &q, nil
 }
 
-func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
+func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error) {
 	var q SelectQuery
 
 	// analyze `from`
 	var schemes []*meta.Scheme
-	for _, name := range n.From{
+	for _, name := range n.From {
 		scheme := a.catalog.FetchScheme(name)
-		if scheme == nil{
+		if scheme == nil {
 			return nil, fmt.Errorf("select failed :table `%s` doesn't exist", name)
 		}
 		schemes = append(schemes, scheme)
@@ -130,33 +129,33 @@ func (a *Analyzer) analyzeSelect(n *SelectStmt) (*SelectQuery, error){
 
 	// analyze `select`
 	var cols []*meta.Column
-	for _, colName := range n.ColNames{
+	for _, colName := range n.ColNames {
 		found := false
-		for _, scheme := range schemes{
-			for _, col := range scheme.ColNames{
-				if col == colName{
+		for _, scheme := range schemes {
+			for _, col := range scheme.ColNames {
+				if col == colName {
 					found = true
 					col := &meta.Column{
-						Name:colName,
+						Name: colName,
 					}
 					cols = append(cols, col)
 				}
 			}
 		}
 
-		if !found{
+		if !found {
 			return nil, fmt.Errorf("select failed : column `%s` doesn't exist", colName)
 		}
 	}
 
-	for _, c := range cols{
-		if c.Name == schemes[0].PrimaryKey{
+	for _, c := range cols {
+		if c.Name == schemes[0].PrimaryKey {
 			c.Primary = true
 		}
 	}
 
 	var tables []*meta.Table
-	for _, s := range schemes{
+	for _, s := range schemes {
 		table := s.ConvertTable()
 		tables = append(tables, table)
 	}
@@ -171,31 +170,31 @@ func (a *Analyzer) analyzeUpdate(n *UpdateStmt) (*UpdateQuery, error) {
 	var q UpdateQuery
 
 	// analyze `update`
-	if !a.catalog.HasScheme(n.TableName){
+	if !a.catalog.HasScheme(n.TableName) {
 		return nil, fmt.Errorf("insert failed : `%s` doesn't exists", n.TableName)
 	}
 	scheme := a.catalog.FetchScheme(n.TableName)
 
 	t := &meta.Table{
-		Name:n.TableName,
+		Name: n.TableName,
 	}
 
 	// analyze `set`
 	var lits []string
-	for _, l := range n.Set{
+	for _, l := range n.Set {
 		num := l.(*Lit)
 		lits = append(lits, num.v)
 	}
 
 	// FIXME
 	var sets []interface{}
-	for i, v := range lits{
-		if scheme.ColTypes[i] == meta.Int{
+	for i, v := range lits {
+		if scheme.ColTypes[i] == meta.Int {
 			n, _ := strconv.Atoi(v)
 			sets = append(sets, n)
-		}else if scheme.ColTypes[i] == meta.Varchar{
+		} else if scheme.ColTypes[i] == meta.Varchar {
 			sets = append(sets, v)
-		}else{
+		} else {
 			return nil, fmt.Errorf("update failed : unexpected types parsed")
 		}
 	}
@@ -207,22 +206,22 @@ func (a *Analyzer) analyzeUpdate(n *UpdateStmt) (*UpdateQuery, error) {
 	return &q, nil
 }
 
-func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, error){
+func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, error) {
 	var q CreateTableQuery
 
-	if n.PrimaryKey == ""{
+	if n.PrimaryKey == "" {
 		return nil, errors.New("create table failed : primary key is needed")
 	}
 
-	if a.catalog.HasScheme(n.TableName){
+	if a.catalog.HasScheme(n.TableName) {
 		return nil, fmt.Errorf("create table failed : table name `%s` already exists", n.TableName)
 	}
 
 	var types []meta.ColType
-	for _, typ := range n.ColTypes{
-		if typ == "int"{
+	for _, typ := range n.ColTypes {
+		if typ == "int" {
 			types = append(types, meta.Int)
-		} else if typ == "varchar"{
+		} else if typ == "varchar" {
 			types = append(types, meta.Varchar)
 		}
 	}
@@ -231,7 +230,7 @@ func (a *Analyzer) analyzeCreateTable(n *CreateTableStmt) (*CreateTableQuery, er
 	return &q, nil
 }
 
-func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error){
+func (a *Analyzer) AnalyzeMain(stmt Stmt) (Query, error) {
 	switch concrete := stmt.(type) {
 	case *SelectStmt:
 		return a.analyzeSelect(concrete)

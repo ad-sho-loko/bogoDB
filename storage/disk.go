@@ -13,12 +13,11 @@ import (
 type diskManager struct {
 }
 
-func newDiskManager() *diskManager{
-	return &diskManager{
-	}
+func newDiskManager() *diskManager {
+	return &diskManager{}
 }
 
-func (d *diskManager) toPid(tid uint64) uint64{
+func (d *diskManager) toPid(tid uint64) uint64 {
 	return tid / TupleNumber
 }
 
@@ -29,17 +28,17 @@ func (d *diskManager) fetchPageByTid(tableName string, tid uint64) (*Page, error
 }
 */
 
-func (d *diskManager) fetchPage(dirPath, tableName string, pgid uint64) (*Page, error){
+func (d *diskManager) fetchPage(dirPath, tableName string, pgid uint64) (*Page, error) {
 	fileName := strconv.FormatUint(pgid, 10)
 	pagePath := path.Join(dirPath, tableName, fileName)
 
 	_, err := os.Stat(pagePath)
-	if os.IsNotExist(err){
+	if os.IsNotExist(err) {
 		return nil, err
 	}
 
 	bytes, err := ioutil.ReadFile(pagePath)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
@@ -48,17 +47,17 @@ func (d *diskManager) fetchPage(dirPath, tableName string, pgid uint64) (*Page, 
 	return DeserializePage(b)
 }
 
-func (d *diskManager) persist(dirName string, tableName string, pgid uint64, page *Page) error{
+func (d *diskManager) persist(dirName string, tableName string, pgid uint64, page *Page) error {
 	b, err := SerializePage(page)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
 	p := filepath.Join(dirName, tableName)
-	if _, err := os.Stat(p); os.IsNotExist(err){
-		err := os.Mkdir(p,0777)
-		if err != nil{
+	if _, err := os.Stat(p); os.IsNotExist(err) {
+		err := os.Mkdir(p, 0777)
+		if err != nil {
 			panic(err)
 		}
 	}
@@ -68,25 +67,25 @@ func (d *diskManager) persist(dirName string, tableName string, pgid uint64, pag
 	return ioutil.WriteFile(savePath, b[:], 0644)
 }
 
-func (d *diskManager) readIndex(indexName string) (*meta.BTree, error){
+func (d *diskManager) readIndex(indexName string) (*meta.BTree, error) {
 	readPath := path.Join(indexName)
 	bytes, err := ioutil.ReadFile(readPath)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	btree, err := meta.DeserializeBTree(bytes)
-	if err != nil{
+	if err != nil {
 		return nil, err
 	}
 
 	return btree, nil
 }
 
-func (d *diskManager) writeIndex(dirPath, indexName string, tree *meta.BTree) error{
+func (d *diskManager) writeIndex(dirPath, indexName string, tree *meta.BTree) error {
 	b, err := meta.SerializeBTree(tree)
 
-	if err != nil{
+	if err != nil {
 		return err
 	}
 

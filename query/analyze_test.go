@@ -8,19 +8,19 @@ import (
 	"testing"
 )
 
-func TestAnalyzeCreateTable(t *testing.T){
+func TestAnalyzeCreateTable(t *testing.T) {
 	n := &CreateTableStmt{
-		TableName:"users",
-		ColNames:[]string{"id"},
-		ColTypes:[]string{"int"},
-		PrimaryKey:"id",
+		TableName:  "users",
+		ColNames:   []string{"id"},
+		ColTypes:   []string{"int"},
+		PrimaryKey: "id",
 	}
 
 	ctg := storage.NewEmtpyCatalog()
 	analyzer := NewAnalyzer(ctg)
 	q, err := analyzer.analyzeCreateTable(n)
 
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 

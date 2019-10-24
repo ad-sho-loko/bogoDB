@@ -6,15 +6,15 @@ type TokenKind int
 
 type Token struct {
 	kind TokenKind
-	str string
+	str  string
 }
 
-func NewToken(kind TokenKind, str string) *Token{
-	return &Token{ kind : kind, str : str}
+func NewToken(kind TokenKind, str string) *Token {
+	return &Token{kind: kind, str: str}
 }
 
 // The list of tokens
-const(
+const (
 	ILLEGAL TokenKind = iota
 	EOF
 
@@ -57,198 +57,196 @@ const(
 )
 
 var tokens = [...]string{
-	ILLEGAL:"Illegal",
-	EOF:"Eor",
-	STRING:"String",
-	NUMBER:"Number",
-	INT:"Int",
-	LBRACE:"{",
-	RBRACE:"}",
-	LPAREN:"(",
-	RPAREN:")",
-	COMMA:",",
-	STAR:"*",
-	SELECT:"Select",
-	FROM:"From",
-	WHERE:"Where",
-	CREATE:"Create",
-	TABLE:"Table",
-	INSERT:"Insert",
-	INTO:"Into",
-	VALUES:"Values",
-	UPDATE:"Update",
-	SET:"Set",
-	BEGIN:"Begin",
-	COMMIT:"Commit",
-	ROLLBACK:"Abort",
-	PRIMARY:"Primary",
-	KEY:"Key",
+	ILLEGAL:  "Illegal",
+	EOF:      "Eor",
+	STRING:   "String",
+	NUMBER:   "Number",
+	INT:      "Int",
+	LBRACE:   "{",
+	RBRACE:   "}",
+	LPAREN:   "(",
+	RPAREN:   ")",
+	COMMA:    ",",
+	STAR:     "*",
+	SELECT:   "Select",
+	FROM:     "From",
+	WHERE:    "Where",
+	CREATE:   "Create",
+	TABLE:    "Table",
+	INSERT:   "Insert",
+	INTO:     "Into",
+	VALUES:   "Values",
+	UPDATE:   "Update",
+	SET:      "Set",
+	BEGIN:    "Begin",
+	COMMIT:   "Commit",
+	ROLLBACK: "Abort",
+	PRIMARY:  "Primary",
+	KEY:      "Key",
 }
 
-func (t TokenKind) String() string{
+func (t TokenKind) String() string {
 	return tokens[t]
 }
 
 type Tokenizer struct {
 	input string
-	pos int
+	pos   int
 }
 
 func NewTokenizer(input string) *Tokenizer {
 	return &Tokenizer{
-		input:input,
-		pos:0,
+		input: input,
+		pos:   0,
 	}
 }
 
-func (t *Tokenizer) isSpace() bool{
+func (t *Tokenizer) isSpace() bool {
 	return t.input[t.pos] == ' ' || t.input[t.pos] == '\n' || t.input[t.pos] == '\t'
 }
 
-
-func (t *Tokenizer) skipSpace(){
-	for t.isSpace(){
+func (t *Tokenizer) skipSpace() {
+	for t.isSpace() {
 		t.pos++
 	}
 }
 
-func (t *Tokenizer) isEnd() bool{
+func (t *Tokenizer) isEnd() bool {
 	return t.pos >= len(t.input)
 }
 
-func (t *Tokenizer) matchKeyWord(keyword string) bool{
-	ok := t.pos + len(keyword) <= len(t.input) &&
+func (t *Tokenizer) matchKeyWord(keyword string) bool {
+	ok := t.pos+len(keyword) <= len(t.input) &&
 		strings.ToLower(t.input[t.pos:t.pos+len(keyword)]) == keyword
 
-	if ok{
+	if ok {
 		t.pos += len(keyword)
 	}
 	return ok
 }
 
-func (t *Tokenizer) isAsciiChar() bool{
+func (t *Tokenizer) isAsciiChar() bool {
 	return (t.input[t.pos] >= 'a' && t.input[t.pos] <= 'z') ||
-			(t.input[t.pos] >= 'A' && t.input[t.pos] <= 'Z')
+		(t.input[t.pos] >= 'A' && t.input[t.pos] <= 'Z')
 }
 
-func (t *Tokenizer) isNumber() bool{
+func (t *Tokenizer) isNumber() bool {
 	return t.input[t.pos] >= '0' && t.input[t.pos] <= '9'
 }
 
-
-func (t *Tokenizer) scanNumber() string{
+func (t *Tokenizer) scanNumber() string {
 	var out []uint8
-	for !t.isEnd() && !t.isSpace() && t.isNumber(){
+	for !t.isEnd() && !t.isSpace() && t.isNumber() {
 		out = append(out, t.input[t.pos])
 		t.pos++
 	}
 	return string(out)
 }
 
-func (t *Tokenizer) scanString() string{
+func (t *Tokenizer) scanString() string {
 	var out []uint8
-	for !t.isEnd() && !t.isSpace(){
+	for !t.isEnd() && !t.isSpace() {
 		out = append(out, t.input[t.pos])
 		t.pos++
 	}
 	return string(out)
 }
 
-func (t *Tokenizer) Tokenize() ([]*Token, error){
+func (t *Tokenizer) Tokenize() ([]*Token, error) {
 	var tokens []*Token
 
 	// compatible with ascii.
-	for t.pos = 0; t.pos<len(t.input);{
+	for t.pos = 0; t.pos < len(t.input); {
 		t.skipSpace()
 
-		if t.matchKeyWord("create"){
-			tokens = append(tokens, &Token{ kind : CREATE })
+		if t.matchKeyWord("create") {
+			tokens = append(tokens, &Token{kind: CREATE})
 			continue
 		}
 
-		if t.matchKeyWord("table"){
-			tokens = append(tokens, &Token{ kind : TABLE })
+		if t.matchKeyWord("table") {
+			tokens = append(tokens, &Token{kind: TABLE})
 			continue
 		}
 
-		if t.matchKeyWord("insert"){
-			tokens = append(tokens, &Token{ kind : INSERT })
+		if t.matchKeyWord("insert") {
+			tokens = append(tokens, &Token{kind: INSERT})
 			continue
 		}
 
-		if t.matchKeyWord("into"){
-			tokens = append(tokens, &Token{ kind : INTO })
+		if t.matchKeyWord("into") {
+			tokens = append(tokens, &Token{kind: INTO})
 			continue
 		}
 
-		if t.matchKeyWord("values"){
-			tokens = append(tokens, &Token{ kind : VALUES })
+		if t.matchKeyWord("values") {
+			tokens = append(tokens, &Token{kind: VALUES})
 			continue
 		}
 
-		if t.matchKeyWord("int"){
-			tokens = append(tokens, &Token{ kind : INT })
+		if t.matchKeyWord("int") {
+			tokens = append(tokens, &Token{kind: INT})
 			continue
 		}
 
-		if t.matchKeyWord("select"){
-			tokens = append(tokens, &Token{ kind : SELECT })
+		if t.matchKeyWord("select") {
+			tokens = append(tokens, &Token{kind: SELECT})
 			continue
 		}
 
-		if t.matchKeyWord("from"){
-			tokens = append(tokens, &Token{ kind : FROM })
+		if t.matchKeyWord("from") {
+			tokens = append(tokens, &Token{kind: FROM})
 			continue
 		}
 
-		if t.matchKeyWord("where"){
-			tokens = append(tokens, &Token{ kind : WHERE })
+		if t.matchKeyWord("where") {
+			tokens = append(tokens, &Token{kind: WHERE})
 			continue
 		}
 
-		if t.matchKeyWord("update"){
-			tokens = append(tokens, &Token{ kind : UPDATE })
+		if t.matchKeyWord("update") {
+			tokens = append(tokens, &Token{kind: UPDATE})
 			continue
 		}
 
-		if t.matchKeyWord("set"){
-			tokens = append(tokens, &Token{ kind : SET })
+		if t.matchKeyWord("set") {
+			tokens = append(tokens, &Token{kind: SET})
 			continue
 		}
 
-		if t.matchKeyWord("begin"){
-			tokens = append(tokens, &Token{ kind : BEGIN })
+		if t.matchKeyWord("begin") {
+			tokens = append(tokens, &Token{kind: BEGIN})
 			continue
 		}
 
-		if t.matchKeyWord("commit"){
-			tokens = append(tokens, &Token{ kind : COMMIT })
+		if t.matchKeyWord("commit") {
+			tokens = append(tokens, &Token{kind: COMMIT})
 			continue
 		}
 
-		if t.matchKeyWord("rollback"){
-			tokens = append(tokens, &Token{ kind : ROLLBACK })
+		if t.matchKeyWord("rollback") {
+			tokens = append(tokens, &Token{kind: ROLLBACK})
 			continue
 		}
 
-		if t.matchKeyWord("primary"){
-			tokens = append(tokens, &Token{ kind : PRIMARY })
+		if t.matchKeyWord("primary") {
+			tokens = append(tokens, &Token{kind: PRIMARY})
 			continue
 		}
 
-		if t.matchKeyWord("key"){
-			tokens = append(tokens, &Token{ kind : KEY })
+		if t.matchKeyWord("key") {
+			tokens = append(tokens, &Token{kind: KEY})
 			continue
 		}
 
-		if t.isNumber(){
+		if t.isNumber() {
 			num := t.scanNumber()
 			tkn := NewToken(NUMBER, num)
 			tokens = append(tokens, tkn)
 			continue
 		}
 
-		if t.isAsciiChar(){
+		if t.isAsciiChar() {
 			ascii := t.scanString()
 			tkn := NewToken(STRING, ascii)
 			tokens = append(tokens, tkn)
@@ -256,13 +254,20 @@ func (t *Tokenizer) Tokenize() ([]*Token, error){
 		}
 
 		switch t.input[t.pos] {
-		case '{': tokens = append(tokens, &Token{ kind : LBRACE})
-		case '}': tokens = append(tokens, &Token{ kind : RBRACE})
-		case '(': tokens = append(tokens, &Token{ kind : LPAREN})
-		case ')': tokens = append(tokens, &Token{ kind : RPAREN})
-		case ',': tokens = append(tokens, &Token{ kind : COMMA})
-		case '*': tokens = append(tokens, &Token{ kind : STAR})
-		case '=': tokens = append(tokens, &Token{ kind : EQ})
+		case '{':
+			tokens = append(tokens, &Token{kind: LBRACE})
+		case '}':
+			tokens = append(tokens, &Token{kind: RBRACE})
+		case '(':
+			tokens = append(tokens, &Token{kind: LPAREN})
+		case ')':
+			tokens = append(tokens, &Token{kind: RPAREN})
+		case ',':
+			tokens = append(tokens, &Token{kind: COMMA})
+		case '*':
+			tokens = append(tokens, &Token{kind: STAR})
+		case '=':
+			tokens = append(tokens, &Token{kind: EQ})
 		default:
 			// error
 		}
@@ -273,6 +278,6 @@ func (t *Tokenizer) Tokenize() ([]*Token, error){
 	return tokens, nil
 }
 
-func IsType(kind TokenKind) bool{
+func IsType(kind TokenKind) bool {
 	return kind > type_begin && kind < type_end
 }

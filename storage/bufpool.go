@@ -7,23 +7,23 @@ import (
 )
 
 type bufferPool struct {
-	lru *meta.Lru
+	lru   *meta.Lru
 	btree map[string]*meta.BTree
 }
 
 type bufferTag struct {
 	tableName string
-	pgid uint64
+	pgid      uint64
 }
 
-func newBufferTag(tableName string, pgid uint64) *bufferTag{
+func newBufferTag(tableName string, pgid uint64) *bufferTag {
 	return &bufferTag{
-		tableName:tableName,
-		pgid:pgid,
+		tableName: tableName,
+		pgid:      pgid,
 	}
 }
 
-func (b *bufferTag) hash() [16]byte{
+func (b *bufferTag) hash() [16]byte {
 	from := []byte(b.tableName)
 	pgidByte := make([]byte, 8)
 	binary.BigEndian.PutUint64(pgidByte, b.pgid)
@@ -34,38 +34,38 @@ func (b *bufferTag) hash() [16]byte{
 
 type pageDescriptor struct {
 	tableName string
-	pgid uint64
-	dirty bool
-	ref uint64
-	page *Page
+	pgid      uint64
+	dirty     bool
+	ref       uint64
+	page      *Page
 }
 
-func newBufferPool() *bufferPool{
+func newBufferPool() *bufferPool {
 	return &bufferPool{
-		lru: meta.NewLru(1000),
-		btree:make(map[string]*meta.BTree),
+		lru:   meta.NewLru(1000),
+		btree: make(map[string]*meta.BTree),
 	}
 }
 
-func (b *bufferPool) toPid(tid uint64) uint64{
+func (b *bufferPool) toPid(tid uint64) uint64 {
 	return tid / TupleNumber
 }
 
-func (b *bufferPool) pinPage(pg *pageDescriptor){
+func (b *bufferPool) pinPage(pg *pageDescriptor) {
 	pg.ref++
 }
 
-func (b *bufferPool) unpinPage(pg *pageDescriptor){
+func (b *bufferPool) unpinPage(pg *pageDescriptor) {
 	pg.ref--
 }
 
-func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error){
+func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error) {
 	pgid := b.toPid(tid)
 	bt := newBufferTag(tableName, pgid)
 
 	hash := bt.hash()
 	p := b.lru.Get(hash)
-	if p == nil{
+	if p == nil {
 		return nil, nil
 	}
 
@@ -73,7 +73,7 @@ func (b *bufferPool) readPage(tableName string, tid uint64) (*Page, error){
 	return pd.page, nil
 }
 
-func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool{
+func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool {
 	// TODO
 	// latestTid := 0
 	// pgid := b.toPid(latestTid)
@@ -81,15 +81,15 @@ func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool{
 
 	hash := bt.hash()
 	p := b.lru.Get(hash)
-	if p == nil{
+	if p == nil {
 		return false
 	}
 
 	pd := p.(*pageDescriptor)
 	pd.dirty = true
 
-	for i, tp := range pd.page.Tuples{
-		if tp.IsUnused(){
+	for i, tp := range pd.page.Tuples {
+		if tp.IsUnused() {
 			pd.page.Tuples[i] = *t
 			break
 		}
@@ -98,20 +98,20 @@ func (b *bufferPool) appendTuple(tableName string, t *Tuple) bool{
 	return true
 }
 
-func (b *bufferPool) putPage(tableName string, pgid uint64, p *Page) (bool, *Page){
+func (b *bufferPool) putPage(tableName string, pgid uint64, p *Page) (bool, *Page) {
 	bt := newBufferTag(tableName, pgid)
 
 	pd := &pageDescriptor{
-		tableName:tableName,
-		pgid:pgid,
-		page:p,
-		ref:0,
-		dirty:false,
+		tableName: tableName,
+		pgid:      pgid,
+		page:      p,
+		ref:       0,
+		dirty:     false,
 	}
 
 	hash := bt.hash()
 	victimPage := b.lru.Insert(hash, pd)
-	if victimPage == nil{
+	if victimPage == nil {
 		return false, nil
 	}
 
@@ -119,7 +119,7 @@ func (b *bufferPool) putPage(tableName string, pgid uint64, p *Page) (bool, *Pag
 	return victim.dirty, victim.page
 }
 
-func (b *bufferPool) readIndex(indexName string) (bool, *meta.BTree){
+func (b *bufferPool) readIndex(indexName string) (bool, *meta.BTree) {
 	tree, found := b.btree[indexName]
 	return found, tree
 }

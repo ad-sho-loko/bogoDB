@@ -7,17 +7,17 @@ import (
 	"testing"
 )
 
-func TestTxidAtomicity(t *testing.T){
+func TestTxidAtomicity(t *testing.T) {
 	var wg sync.WaitGroup
 	var exists [100001]bool
 	var manager *TransactionManager
 
-	for i:=0; i<100000; i++{
+	for i := 0; i < 100000; i++ {
 		wg.Add(1)
-		go func(){
+		go func() {
 			id := manager.newTxid()
 
-			if exists[id]{
+			if exists[id] {
 				log.Fatal("txid duplicated")
 			}
 

@@ -11,12 +11,12 @@ import (
 	"strings"
 )
 
-func showTitle(){
+func showTitle() {
 	title := `BogoDb : A toy database management system.`
 	fmt.Println(title)
 }
 
-func client(){
+func client() {
 	showTitle()
 	stdin := bufio.NewScanner(os.Stdin)
 	for {
@@ -25,21 +25,21 @@ func client(){
 		q := stdin.Text()
 
 		var err error
-		if strings.HasPrefix(q, "exit"){
+		if strings.HasPrefix(q, "exit") {
 			_, err = http.Get("http://localhost:32198/exit")
-		}else{
+		} else {
 			_, err = http.Get("http://localhost:32198/execute?query=" + q)
 		}
 
-		if err != nil{
+		if err != nil {
 			fmt.Println(err)
 		}
 	}
 }
 
-func server(){
+func server() {
 	bdb, err := db.NewBogoDb()
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 	bdb.Init()
@@ -50,10 +50,10 @@ var (
 	serverMode = flag.Bool("server", false, "boot the db server")
 )
 
-func main(){
+func main() {
 	flag.Parse()
 
-	if *serverMode{
+	if *serverMode {
 		server()
 		return
 	}

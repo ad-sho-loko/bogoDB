@@ -10,10 +10,10 @@ import (
 
 func TestExecuteCreateTable(t *testing.T) {
 	q := &CreateTableQuery{
-		Scheme:&meta.Scheme{
-			TblName:"users",
-			ColNames:[]string{"id"},
-			ColTypes:[]meta.ColType{meta.Int},
+		Scheme: &meta.Scheme{
+			TblName:  "users",
+			ColNames: []string{"id"},
+			ColTypes: []meta.ColType{meta.Int},
 		},
 	}
 
@@ -21,7 +21,7 @@ func TestExecuteCreateTable(t *testing.T) {
 	e := NewExecutor(nil, ctg, nil)
 	assert.False(t, e.catalog.HasScheme("users"))
 
-	if err := e.createTable(q); err != nil{
+	if err := e.createTable(q); err != nil {
 		log.Fatal(err)
 	}
 

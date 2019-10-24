@@ -6,11 +6,11 @@ import (
 	"testing"
 )
 
-func TestEq(t *testing.T){
+func TestEq(t *testing.T) {
 	tokens := []*Token{
-		{kind:STRING, str:"1"},
-		{kind:EQ},
-		{kind:STRING, str:"2"},
+		{kind: STRING, str: "1"},
+		{kind: EQ},
+		{kind: STRING, str: "2"},
 	}
 
 	p := NewParser(tokens)
@@ -22,21 +22,20 @@ func TestEq(t *testing.T){
 	assert.Equal(t, "2", right.v)
 }
 
-
-func TestParseCreateTable(t *testing.T){
+func TestParseCreateTable(t *testing.T) {
 	tokens := []*Token{
-		{kind:CREATE},
-		{kind:TABLE},
-		{kind:STRING, str:"users"},
-		{kind:LBRACE},
-		{kind:STRING, str:"id"},
-		{kind:INT, str:"int"},
-		{kind:RBRACE},
+		{kind: CREATE},
+		{kind: TABLE},
+		{kind: STRING, str: "users"},
+		{kind: LBRACE},
+		{kind: STRING, str: "id"},
+		{kind: INT, str: "int"},
+		{kind: RBRACE},
 	}
 
 	p := NewParser(tokens)
 	node, err := p.Parse()
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -46,21 +45,21 @@ func TestParseCreateTable(t *testing.T){
 	assert.Equal(t, "int", n.ColTypes[0])
 }
 
-func TestParseSelect(t *testing.T){
+func TestParseSelect(t *testing.T) {
 	tokens := []*Token{
-		{kind:SELECT},
-		{kind:STRING, str:"id"},
-		{kind:FROM},
-		{kind:STRING, str:"users"},
-		{kind:WHERE, str:"where"},
-		{kind:STRING, str:"1"},
-		{kind:EQ},
-		{kind:STRING, str:"2"},
+		{kind: SELECT},
+		{kind: STRING, str: "id"},
+		{kind: FROM},
+		{kind: STRING, str: "users"},
+		{kind: WHERE, str: "where"},
+		{kind: STRING, str: "1"},
+		{kind: EQ},
+		{kind: STRING, str: "2"},
 	}
 
 	p := NewParser(tokens)
 	node, err := p.Parse()
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -69,21 +68,20 @@ func TestParseSelect(t *testing.T){
 	assert.Equal(t, "id", n.ColNames[0])
 }
 
-
-func TestParseInsert(t *testing.T){
+func TestParseInsert(t *testing.T) {
 	tokens := []*Token{
-		{kind:INSERT},
-		{kind:INTO},
-		{kind:STRING, str:"users"},
-		{kind:VALUES},
-		{kind:LPAREN},
-		{kind:NUMBER, str:"1"},
-		{kind:RPAREN},
+		{kind: INSERT},
+		{kind: INTO},
+		{kind: STRING, str: "users"},
+		{kind: VALUES},
+		{kind: LPAREN},
+		{kind: NUMBER, str: "1"},
+		{kind: RPAREN},
 	}
 
 	p := NewParser(tokens)
 	node, err := p.Parse()
-	if err != nil{
+	if err != nil {
 		log.Fatal(err)
 	}
 

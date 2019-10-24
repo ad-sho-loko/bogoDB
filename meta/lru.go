@@ -7,10 +7,10 @@ import (
 
 // Lru is the thread-safe LRU cache.
 type Lru struct {
-	cap int
+	cap       int
 	evictList *list.List
-	items map[interface{}]*list.Element
-	mutex sync.RWMutex
+	items     map[interface{}]*list.Element
+	mutex     sync.RWMutex
 }
 
 type entry struct {
@@ -20,9 +20,9 @@ type entry struct {
 
 func NewLru(cap int) *Lru {
 	return &Lru{
-		cap:cap,
-		evictList:list.New(),
-		items:make(map[interface{}]*list.Element),
+		cap:       cap,
+		evictList: list.New(),
+		items:     make(map[interface{}]*list.Element),
 	}
 }
 
@@ -35,7 +35,7 @@ func (l *Lru) Insert(key, value interface{}) interface{} {
 	elm := l.evictList.PushFront(ent)
 	l.items[key] = elm
 
-	if l.needEvict(){
+	if l.needEvict() {
 		victim = l.evictList.Back()
 		l.removeOldest()
 	}
@@ -43,11 +43,11 @@ func (l *Lru) Insert(key, value interface{}) interface{} {
 	return victim
 }
 
-func (l *Lru) Get(key interface{}) interface{}{
+func (l *Lru) Get(key interface{}) interface{} {
 	l.mutex.RLock()
 	defer l.mutex.RUnlock()
 
-	if elm, ok := l.items[key]; ok{
+	if elm, ok := l.items[key]; ok {
 		l.evictList.MoveToFront(elm)
 		return elm.Value.(*entry).value
 	}
@@ -55,25 +55,25 @@ func (l *Lru) Get(key interface{}) interface{}{
 	return nil
 }
 
-func (l *Lru) Len() int{
+func (l *Lru) Len() int {
 	return l.evictList.Len()
 }
 
-func (l *Lru) removeOldest(){
+func (l *Lru) removeOldest() {
 	elm := l.evictList.Back()
-	if elm != nil{
+	if elm != nil {
 		l.evictList.Remove(elm)
 		delete(l.items, elm.Value.(*entry).key)
 	}
 }
 
-func (l *Lru) needEvict() bool{
+func (l *Lru) needEvict() bool {
 	return l.Len() > l.cap
 }
 
-func (l *Lru) GetAll() []interface{}{
+func (l *Lru) GetAll() []interface{} {
 	var items []interface{}
-	for _, item := range l.items{
+	for _, item := range l.items {
 		items = append(items, item.Value.(*entry).value)
 	}
 	return items

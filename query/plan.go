@@ -19,8 +19,8 @@ type Scanner interface {
 }
 
 // scanner
-type(
-	SeqScan struct{
+type (
+	SeqScan struct {
 		tblName string
 	}
 
@@ -31,30 +31,30 @@ type(
 	}
 )
 
-func NewPlanner(q Query) *Planner{
+func NewPlanner(q Query) *Planner {
 	return &Planner{
-		q:q,
+		q: q,
 	}
 }
 
-func (p *Planner) planSelect(q *SelectQuery) (*Plan, error){
+func (p *Planner) planSelect(q *SelectQuery) (*Plan, error) {
 	// if where contains a primary key, use index scan.
-	for _, w := range q.Where{
+	for _, w := range q.Where {
 		eq, ok := w.(*Eq)
-		if !ok{
+		if !ok {
 			continue
 		}
 
 		col, ok := eq.left.(*Lit)
-		if !ok{
+		if !ok {
 			continue
 		}
 
-		for _, c := range q.Cols{
-			if col.v == c.Name && c.Primary{
+		for _, c := range q.Cols {
+			if col.v == c.Name && c.Primary {
 				return &Plan{
 					// FIXME
-					scanners:&IndexScan{
+					scanners: &IndexScan{
 						tblName: q.From[0].Name,
 						index:   q.From[0].Name + "_" + col.v,
 						value:   eq.right.(*Lit).v,
@@ -66,27 +66,27 @@ func (p *Planner) planSelect(q *SelectQuery) (*Plan, error){
 
 	// use seqscan
 	return &Plan{
-		scanners:&SeqScan{
-			tblName:q.From[0].Name,
+		scanners: &SeqScan{
+			tblName: q.From[0].Name,
 		},
 	}, nil
 }
 
-func (p *Planner) planUpdate(q *UpdateQuery) (*Plan, error){
+func (p *Planner) planUpdate(q *UpdateQuery) (*Plan, error) {
 	// if where contains a primary key, use index scan.
-	for _, w := range q.Where{
+	for _, w := range q.Where {
 		eq, ok := w.(*Eq)
-		if !ok{
+		if !ok {
 			continue
 		}
 		col, ok := eq.left.(*Lit)
-		if !ok{
+		if !ok {
 			continue
 		}
-		for _, c := range q.Cols{
-			if col.v == c.Name && c.Primary{
+		for _, c := range q.Cols {
+			if col.v == c.Name && c.Primary {
 				return &Plan{
-					scanners:&IndexScan{
+					scanners: &IndexScan{
 						tblName: q.Table.Name,
 						index:   col.v,
 					},
@@ -97,13 +97,13 @@ func (p *Planner) planUpdate(q *UpdateQuery) (*Plan, error){
 
 	// use seqscan
 	return &Plan{
-		scanners:&SeqScan{
-			tblName:q.Table.Name,
+		scanners: &SeqScan{
+			tblName: q.Table.Name,
 		},
 	}, nil
 }
 
-func (p *Planner) PlanMain() (*Plan, error){
+func (p *Planner) PlanMain() (*Plan, error) {
 	switch concrete := p.q.(type) {
 	case *SelectQuery:
 		return p.planSelect(concrete)

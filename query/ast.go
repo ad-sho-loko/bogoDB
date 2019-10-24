@@ -7,28 +7,28 @@ type Stmt interface {
 // statements
 type (
 	CreateTableStmt struct {
-		TableName string
-		ColNames []string
-		ColTypes []string
+		TableName  string
+		ColNames   []string
+		ColTypes   []string
 		PrimaryKey string
 	}
 
 	InsertStmt struct {
 		TableName string
-		Values []Expr
+		Values    []Expr
 	}
 
 	SelectStmt struct {
 		ColNames []string
-		From 	 []string
-		Wheres []Expr
+		From     []string
+		Wheres   []Expr
 	}
 
 	UpdateStmt struct {
- 		TableName string
-		ColNames []string
- 		Set []interface{}
-		Where []Expr
+		TableName string
+		ColNames  []string
+		Set       []interface{}
+		Where     []Expr
 	}
 
 	BeginStmt struct {
@@ -41,13 +41,13 @@ type (
 	}
 )
 
-func (s *CreateTableStmt) stmtNode(){}
-func (s *InsertStmt) stmtNode(){}
-func (s *SelectStmt) stmtNode(){}
-func (s *UpdateStmt) stmtNode(){}
-func (s *BeginStmt) stmtNode(){}
-func (s *CommitStmt) stmtNode(){}
-func (s *AbortStmt) stmtNode(){}
+func (s *CreateTableStmt) stmtNode() {}
+func (s *InsertStmt) stmtNode()      {}
+func (s *SelectStmt) stmtNode()      {}
+func (s *UpdateStmt) stmtNode()      {}
+func (s *BeginStmt) stmtNode()       {}
+func (s *CommitStmt) stmtNode()      {}
+func (s *AbortStmt) stmtNode()       {}
 
 // expressions
 type Expr interface {
@@ -55,7 +55,7 @@ type Expr interface {
 }
 
 type Eq struct {
-	left Expr
+	left  Expr
 	right Expr
 }
 
@@ -63,5 +63,5 @@ type Lit struct {
 	v string
 }
 
-func (l *Eq) exprNode(){}
-func (l *Lit) exprNode(){}
+func (l *Eq) exprNode()  {}
+func (l *Lit) exprNode() {}

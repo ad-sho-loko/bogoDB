@@ -6,14 +6,14 @@ import (
 	"testing"
 )
 
-func TestInsertAndGet(t *testing.T){
+func TestInsertAndGet(t *testing.T) {
 	lru := NewLru(1)
 	lru.Insert(10, 100)
 	v := lru.Get(10)
 	assert.Equal(t, v, 100)
 }
 
-func TestEvicted(t *testing.T){
+func TestEvicted(t *testing.T) {
 	lru := NewLru(1)
 	lru.Insert(10, 100)
 	lru.Insert(11, 110)
@@ -25,14 +25,14 @@ func TestEvicted(t *testing.T){
 	assert.Nil(t, old)
 }
 
-func TestConcurrency(t *testing.T){
+func TestConcurrency(t *testing.T) {
 	lru := NewLru(1000)
 
 	var wg sync.WaitGroup
 
-	for i:=0; i<1000; i++{
+	for i := 0; i < 1000; i++ {
 		wg.Add(1)
-		go func(){
+		go func() {
 			lru.Insert(i, i)
 			wg.Done()
 		}()

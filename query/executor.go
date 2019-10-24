@@ -10,31 +10,31 @@ import (
 )
 
 type Executor struct {
-	storage *storage.Storage
-	catalog *storage.Catalog
+	storage     *storage.Storage
+	catalog     *storage.Catalog
 	tranManager *storage.TransactionManager
 }
 
-func NewExecutor(storage *storage.Storage, catalog *storage.Catalog, tranManger *storage.TransactionManager) *Executor{
+func NewExecutor(storage *storage.Storage, catalog *storage.Catalog, tranManger *storage.TransactionManager) *Executor {
 	return &Executor{
-		storage:storage,
-		catalog:catalog,
-		tranManager:tranManger,
+		storage:     storage,
+		catalog:     catalog,
+		tranManager: tranManger,
 	}
 }
 
 // SeqScan
-func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
+func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple {
 	var result []*storage.Tuple
 
-	for i:=uint64(0);; i++{
+	for i := uint64(0); ; i++ {
 		t, err := store.ReadTuple(s.tblName, i)
-		if err != nil{
+		if err != nil {
 			// if no more pages, finish reading tuples.
 			break
 		}
 
-		if t.IsUnused(){
+		if t.IsUnused() {
 			// if no more tuples in page, finish reading tuples.
 			break
 		}
@@ -45,39 +45,39 @@ func (s *SeqScan) Scan(store *storage.Storage) []*storage.Tuple{
 }
 
 // IndexScan
-func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple{
+func (s *IndexScan) Scan(store *storage.Storage) []*storage.Tuple {
 	var result []*storage.Tuple
 	btree, _ := store.ReadIndex(s.index)
 
 	i, _ := strconv.Atoi(s.value)
 	item := btree.Get(meta.IntItem(i))
 
-	if item != nil{
+	if item != nil {
 		result = append(result, item.(*storage.Tuple))
 	}
 	return result
 }
 
-func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr) []*storage.Tuple{
+func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr) []*storage.Tuple {
 	// FIXME : eval actually
 	var filtered []*storage.Tuple
-	for _, w := range where{
+	for _, w := range where {
 		left := w.(*Eq).left.(*Lit)
 		right := w.(*Eq).right.(*Lit)
-		for _, t := range tuples{
+		for _, t := range tuples {
 
 			// FIXME : move to planner
 			s := e.catalog.FetchScheme(tableName)
 			order := 0
-			for _, c := range s.ColNames{
-				if c == left.v{
+			for _, c := range s.ColNames {
+				if c == left.v {
 					break
 				}
 				order++
 			}
 
 			n, _ := strconv.Atoi(right.v)
-			if t.Equal(order, right.v, n){
+			if t.Equal(order, right.v, n) {
 				filtered = append(filtered, t)
 			}
 		}
@@ -86,17 +86,17 @@ func (e *Executor) where(tuples []*storage.Tuple, tableName string, where []Expr
 	return filtered
 }
 
-func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) (string, error){
+func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transaction) (string, error) {
 	tuples := p.scanners.Scan(e.storage)
-	if q.Where != nil{
+	if q.Where != nil {
 		tuples = e.where(tuples, q.From[0].Name, q.Where)
 	}
 
 	// consider transactions.
 	var sb strings.Builder
-	for _, t := range tuples{
-		if tran == nil || t.CanSee(tran){
-			for i, c := range q.Cols{
+	for _, t := range tuples {
+		if tran == nil || t.CanSee(tran) {
+			for i, c := range q.Cols {
 				s := fmt.Sprintf(c.Name, t.Data[i].String())
 				sb.WriteString(s)
 			}
@@ -106,7 +106,7 @@ func (e *Executor) selectTable(q *SelectQuery, p *Plan, tran *storage.Transactio
 	return sb.String(), nil
 }
 
-func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
+func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error {
 	inTransaction := tran != nil
 
 	if !inTransaction {
@@ -117,20 +117,20 @@ func (e *Executor) insertTable(w *InsertQuery, tran *storage.Transaction) error{
 	e.storage.InsertTuple(w.Table.Name, t)
 	e.storage.InsertIndex(w.Index, t)
 
-	if !inTransaction{
+	if !inTransaction {
 		e.commitTransaction(tran)
 	}
 
 	return nil
 }
 
-func (e *Executor) updateTable(q *UpdateQuery, p *Plan, tran *storage.Transaction) error{
+func (e *Executor) updateTable(q *UpdateQuery, p *Plan, tran *storage.Transaction) error {
 	return nil
 }
 
 func (e *Executor) createTable(q *CreateTableQuery) error {
 	err := e.catalog.Add(q.Scheme)
-	if err != nil{
+	if err != nil {
 		return err
 	}
 
@@ -138,19 +138,19 @@ func (e *Executor) createTable(q *CreateTableQuery) error {
 	return err
 }
 
-func (e *Executor) beginTransaction() *storage.Transaction{
+func (e *Executor) beginTransaction() *storage.Transaction {
 	return e.tranManager.BeginTransaction()
 }
 
-func (e *Executor) commitTransaction(tran *storage.Transaction){
+func (e *Executor) commitTransaction(tran *storage.Transaction) {
 	e.tranManager.Commit(tran)
 }
 
-func (e *Executor) abortTransaction(tran *storage.Transaction){
+func (e *Executor) abortTransaction(tran *storage.Transaction) {
 	e.tranManager.Abort(tran)
 }
 
-func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (string, error){
+func (e *Executor) ExecuteMain(q Query, p *Plan, tran *storage.Transaction) (string, error) {
 	switch concrete := q.(type) {
 	case *BeginQuery:
 		e.beginTransaction()
