@@ -10,7 +10,7 @@ import (
 func TestTxidAtomicity(t *testing.T) {
 	var wg sync.WaitGroup
 	var exists [100001]bool
-	var manager *TransactionManager
+	manager := &TransactionManager{}
 
 	for i := 0; i < 100000; i++ {
 		wg.Add(1)

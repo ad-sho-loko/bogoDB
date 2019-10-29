@@ -20,7 +20,7 @@ func TestSaveCatalog(t *testing.T) {
 		ColNames: []string{"id"},
 	})
 
-	if err := SaveCatalog("/tmp/bogodb/", ctg); err != nil {
+	if err := SaveCatalog("testdata", ctg); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -37,11 +37,11 @@ func TestLoadCatalog(t *testing.T) {
 		ColNames: []string{"id"},
 	})
 
-	if err := SaveCatalog("/tmp/bogodb/", ctg); err != nil {
+	if err := SaveCatalog("testdata", ctg); err != nil {
 		log.Fatal(err)
 	}
 
-	out, err := LoadCatalog("/tmp/bogodb/")
+	out, err := LoadCatalog("testdata")
 	if err != nil {
 		log.Fatal(err)
 	}
